@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://meetingrecorder.invalid/schema/meeting-1.json",
+  "title": "Meeting Recorder meeting.json, schemaVersion 1",
+  "description": "Metadata of one meeting folder. All positions are sample-frame indices into audio.wav (the single timeline); atMs values are derived.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "title",
+    "startedAt",
+    "status",
+    "audio",
+    "sources",
+    "initialSourceId",
+    "sourceSwitches",
+    "photos"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Wall-clock start with UTC offset. Informational only."
+    },
+    "status": { "enum": ["recording", "complete", "recovered"] },
+    "audio": { "$ref": "#/$defs/audio" },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/source" }
+    },
+    "initialSourceId": { "type": "integer", "minimum": 0 },
+    "sourceSwitches": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sourceSwitch" }
+    },
+    "photos": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/photo" }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "audio": {
+      "type": "object",
+      "required": [
+        "file",
+        "format",
+        "sampleRate",
+        "channels",
+        "channelLayout",
+        "durationFrames",
+        "durationMs"
+      ],
+      "properties": {
+        "file": { "const": "audio.wav" },
+        "format": { "const": "pcm_s16le" },
+        "sampleRate": { "type": "integer", "minimum": 1 },
+        "channels": { "enum": [1, 2] },
+        "channelLayout": { "enum": ["mono", "stereo"] },
+        "durationFrames": { "type": "integer", "minimum": 0 },
+        "durationMs": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "source": {
+      "type": "object",
+      "required": ["id", "name", "type", "deliveredChannels", "channels"],
+      "properties": {
+        "id": { "type": "integer", "minimum": 0 },
+        "name": { "type": "string", "minLength": 1 },
+        "type": { "enum": ["builtin", "usb", "other"] },
+        "deliveredChannels": { "type": "integer", "minimum": 1 },
+        "channels": { "enum": [1, 2] }
+      },
+      "additionalProperties": true
+    },
+    "sourceSwitch": {
+      "type": "object",
+      "required": [
+        "atFrame",
+        "atMs",
+        "fromSourceId",
+        "toSourceId",
+        "reason",
+        "channelsDuplicated"
+      ],
+      "properties": {
+        "atFrame": { "type": "integer", "minimum": 0 },
+        "atMs": { "type": "integer", "minimum": 0 },
+        "fromSourceId": { "type": "integer", "minimum": 0 },
+        "toSourceId": { "type": "integer", "minimum": 0 },
+        "reason": { "enum": ["device-removed"] },
+        "channelsDuplicated": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "photo": {
+      "type": "object",
+      "required": ["file", "atFrame", "atMs"],
+      "properties": {
+        "file": { "type": "string", "pattern": "^photos/photo-[0-9]{3,}\\.jpg$" },
+        "atFrame": { "type": "integer", "minimum": 0 },
+        "atMs": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    }
+  }
+}
