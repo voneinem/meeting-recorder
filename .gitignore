@@ -1,0 +1,29 @@
+# Gradle / Android build output
+build/
+.gradle/
+.kotlin/
+local.properties
+captures/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Signing material
+*.jks
+*.keystore
+keystore.properties
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+*.log
+.env*

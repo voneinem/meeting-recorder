@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The UI is Jetpack Compose; this window theme only provides the system chrome. -->
+    <style name="Theme.MeetingRecorder" parent="android:Theme.DeviceDefault.DayNight">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+</resources>

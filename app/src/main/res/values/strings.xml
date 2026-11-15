@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">Meeting Recorder</string>
+
+    <!-- Shared actions: used by the story screens that follow; tools:ignore is removed in the final cleanup task. -->
+    <string name="action_ok" tools:ignore="UnusedResources">OK</string>
+    <string name="action_cancel" tools:ignore="UnusedResources">Cancel</string>
+    <string name="action_delete" tools:ignore="UnusedResources">Delete</string>
+    <string name="action_rename" tools:ignore="UnusedResources">Rename</string>
+    <string name="action_back" tools:ignore="UnusedResources">Back</string>
+    <string name="action_resume" tools:ignore="UnusedResources">Resume</string>
+    <string name="action_stop" tools:ignore="UnusedResources">Stop</string>
+
+    <!-- User story 1: setup, consent, permissions, recording, list, settings -->
+    <string name="setup_title">Choose a storage folder</string>
+    <string name="setup_explanation">Meeting Recorder saves every meeting as a folder with its audio, photos and notes. Choose or create a folder, for example Documents/Meetings.</string>
+    <string name="setup_privacy_notice">Meetings are stored unencrypted in this folder. If a sync or cloud service is set up for the folder, it will copy your meetings off this phone.</string>
+    <string name="setup_choose_folder">Choose folder</string>
+    <string name="setup_error_unusable">This folder cannot be used: %1$s Please choose another folder.</string>
+    <string name="setup_error_lost">The storage folder is no longer available. Please choose it again.</string>
+    <string name="consent_title">Recording consent</string>
+    <string name="consent_text">Recording a conversation is only allowed with the consent of all participants. Make sure that everyone present agrees to being recorded before you start.</string>
+    <string name="consent_acknowledge">I will make sure everyone agrees</string>
+    <string name="permission_title">Permissions</string>
+    <string name="permission_microphone_reason">Microphone: needed to record the audio of the meeting.</string>
+    <string name="permission_notification_reason">Notifications: show that a recording is running and let you stop it from the notification.</string>
+    <string name="permission_continue">Continue</string>
+    <string name="permission_microphone_denied">Without microphone access no recording is possible.</string>
+    <string name="permission_retry">Try again</string>
+    <string name="permission_open_settings">Open app settings</string>
+    <string name="record_title_label">Title (optional)</string>
+    <string name="record_title_hint">Default: date and time</string>
+    <string name="record_start">Start recording</string>
+    <string name="record_pause">Pause</string>
+    <string name="record_state_recording">Recording</string>
+    <string name="record_state_paused">Paused</string>
+    <string name="record_state_suspended">Recording suspended</string>
+    <string name="record_state_saving">Saving…</string>
+    <string name="record_elapsed_description">Elapsed recording time</string>
+    <string name="record_open_list">Meetings</string>
+    <string name="level_meter_description">Level, channel %1$d of %2$d</string>
+    <string name="level_meter_description_mono">Level</string>
+    <string name="record_error_no_microphone">The microphone cannot be used. Check the permission and that no other app is using it.</string>
+    <string name="record_error_start_failed">The recording could not be started: %1$s</string>
+    <string name="record_error_nothing_recorded">Nothing was recorded, so no meeting was saved.</string>
+    <string name="record_error_generic">The recording hit a problem (%1$s). What was recorded so far is kept.</string>
+    <string name="record_notice_dropped">Part of the audio could not be saved in time and is missing from the recording.</string>
+    <string name="record_notice_suspended">The recording was suspended: %1$s</string>
+    <string name="notification_channel_name">Recording</string>
+    <string name="notification_title_recording">Recording in progress</string>
+    <string name="notification_title_paused">Recording paused</string>
+    <string name="notification_title_suspended">Recording suspended</string>
+    <string name="list_title">Meetings</string>
+    <string name="list_empty">No meetings yet. Start a recording to create one.</string>
+    <string name="list_new_recording">New recording</string>
+    <string name="list_settings">Settings</string>
+    <string name="list_duration">Duration %1$s</string>
+    <string name="list_recovered">Recovered</string>
+    <string name="list_unreadable">Metadata unreadable</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_consent_heading">Recording consent</string>
+    <string name="settings_storage_heading">Storage folder</string>
+    <string name="settings_change_folder">Change folder</string>
+    <string name="settings_about_heading">About</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_license">License: GPL-3.0-or-later</string>
+    <string name="settings_privacy">No data leaves this device. The app has no network access.</string>
+</resources>

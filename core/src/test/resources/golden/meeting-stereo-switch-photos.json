@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "title": "Weekly sync",
+  "startedAt": "2026-11-15T14:30:00+01:00",
+  "status": "complete",
+  "audio": {
+    "file": "audio.wav",
+    "format": "pcm_s16le",
+    "sampleRate": 48000,
+    "channels": 2,
+    "channelLayout": "stereo",
+    "durationFrames": 14400000,
+    "durationMs": 300000
+  },
+  "sources": [
+    {
+      "id": 0,
+      "name": "RØDE Wireless PRO",
+      "type": "usb",
+      "deliveredChannels": 2,
+      "channels": 2
+    },
+    {
+      "id": 1,
+      "name": "Built-in microphone",
+      "type": "builtin",
+      "deliveredChannels": 1,
+      "channels": 1
+    }
+  ],
+  "initialSourceId": 0,
+  "sourceSwitches": [
+    {
+      "atFrame": 1440000,
+      "atMs": 30000,
+      "fromSourceId": 0,
+      "toSourceId": 1,
+      "reason": "device-removed",
+      "channelsDuplicated": true
+    }
+  ],
+  "photos": [
+    {
+      "file": "photos/photo-001.jpg",
+      "atFrame": 480000,
+      "atMs": 10000
+    },
+    {
+      "file": "photos/photo-002.jpg",
+      "atFrame": 1200000,
+      "atMs": 25000
+    }
+  ],
+  "dropouts": [
+    {
+      "atFrame": 2400000,
+      "atMs": 50000,
+      "droppedFrames": 4800
+    }
+  ]
+}

@@ -36,7 +36,7 @@ validation.
 
 ## Technical Context
 
-**Language/Version**: Kotlin (latest stable at scaffolding time), JVM toolchain 17 for `:core`
+**Language/Version**: Kotlin (latest stable at scaffolding time), JVM target 17 for `:core` and `:app`, built with JDK 21
 
 **Primary Dependencies**: AndroidX (all AOSP / Apache-2.0): Compose BOM + Material 3, Activity
 Compose, Lifecycle, Navigation Compose, DocumentFile, CameraX (core, camera2, lifecycle, view);

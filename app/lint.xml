@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lint policy (Principle IX): a missing or extra translation and any hard-coded UI text fail the build. -->
+<lint>
+    <issue id="MissingTranslation" severity="error" />
+    <issue id="ExtraTranslation" severity="error" />
+    <issue id="HardcodedText" severity="error" />
+    <!-- The build is offline-reproducible: newer-version hints must not fail it. -->
+    <issue id="GradleDependency" severity="ignore" />
+    <issue id="NewerVersionAvailable" severity="ignore" />
+    <issue id="AndroidGradlePluginVersion" severity="ignore" />
+</lint>

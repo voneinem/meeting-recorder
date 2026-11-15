@@ -83,7 +83,7 @@ fit is dropped, capture and the timeline keep running (the dropped frames are no
 
 1. `schemaVersion` known; required fields present; enums valid.
 2. `channels` matches `channelLayout`; `sampleRate > 0`; for every source, `channels <= deliveredChannels` and `channels <= 2`.
-3. Every `atFrame` is within `[0, durationFrames]`; lists are sorted ascending.
+3. Every `atFrame` is within `[0, durationFrames]` (not checked while `status` is `recording`, because the duration on disk is only written at stop); lists are sorted ascending.
 4. Every `atMs` equals the value derived from `atFrame` and `sampleRate`.
 5. All referenced source ids exist; a switch changes the source; every dropout has `droppedFrames > 0`.
 6. Photo file names match `photos/photo-NNN.jpg` with NNN strictly increasing from 001.

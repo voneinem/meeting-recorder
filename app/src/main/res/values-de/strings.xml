@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">Meeting Recorder</string>
+
+    <!-- Shared actions: used by the story screens that follow; tools:ignore is removed in the final cleanup task. -->
+    <string name="action_ok" tools:ignore="UnusedResources">OK</string>
+    <string name="action_cancel" tools:ignore="UnusedResources">Abbrechen</string>
+    <string name="action_delete" tools:ignore="UnusedResources">Löschen</string>
+    <string name="action_rename" tools:ignore="UnusedResources">Umbenennen</string>
+    <string name="action_back" tools:ignore="UnusedResources">Zurück</string>
+    <string name="action_resume" tools:ignore="UnusedResources">Fortsetzen</string>
+    <string name="action_stop" tools:ignore="UnusedResources">Stopp</string>
+
+    <!-- User story 1: setup, consent, permissions, recording, list, settings -->
+    <string name="setup_title">Speicherordner wählen</string>
+    <string name="setup_explanation">Meeting Recorder speichert jede Besprechung als Ordner mit Audio, Fotos und Notizen. Wähle einen Ordner oder lege einen an, zum Beispiel Documents/Meetings.</string>
+    <string name="setup_privacy_notice">Besprechungen werden unverschlüsselt in diesem Ordner gespeichert. Ist für den Ordner ein Synchronisierungs- oder Cloud-Dienst eingerichtet, kopiert dieser deine Besprechungen vom Telefon weg.</string>
+    <string name="setup_choose_folder">Ordner wählen</string>
+    <string name="setup_error_unusable">Dieser Ordner kann nicht verwendet werden: %1$s Bitte wähle einen anderen Ordner.</string>
+    <string name="setup_error_lost">Der Speicherordner ist nicht mehr verfügbar. Bitte wähle ihn erneut.</string>
+    <string name="consent_title">Einwilligung zur Aufnahme</string>
+    <string name="consent_text">Ein Gespräch darf nur mit Einwilligung aller Beteiligten aufgenommen werden. Stelle vor dem Start sicher, dass alle Anwesenden mit der Aufnahme einverstanden sind.</string>
+    <string name="consent_acknowledge">Ich stelle sicher, dass alle einverstanden sind</string>
+    <string name="permission_title">Berechtigungen</string>
+    <string name="permission_microphone_reason">Mikrofon: wird benötigt, um den Ton der Besprechung aufzunehmen.</string>
+    <string name="permission_notification_reason">Benachrichtigungen: zeigen, dass eine Aufnahme läuft, und lassen dich sie aus der Benachrichtigung beenden.</string>
+    <string name="permission_continue">Weiter</string>
+    <string name="permission_microphone_denied">Ohne Zugriff auf das Mikrofon ist keine Aufnahme möglich.</string>
+    <string name="permission_retry">Erneut versuchen</string>
+    <string name="permission_open_settings">App-Einstellungen öffnen</string>
+    <string name="record_title_label">Titel (optional)</string>
+    <string name="record_title_hint">Standard: Datum und Uhrzeit</string>
+    <string name="record_start">Aufnahme starten</string>
+    <string name="record_pause">Pause</string>
+    <string name="record_state_recording">Aufnahme läuft</string>
+    <string name="record_state_paused">Pausiert</string>
+    <string name="record_state_suspended">Aufnahme unterbrochen</string>
+    <string name="record_state_saving">Wird gespeichert …</string>
+    <string name="record_elapsed_description">Verstrichene Aufnahmezeit</string>
+    <string name="record_open_list">Besprechungen</string>
+    <string name="level_meter_description">Pegel, Kanal %1$d von %2$d</string>
+    <string name="level_meter_description_mono">Pegel</string>
+    <string name="record_error_no_microphone">Das Mikrofon kann nicht verwendet werden. Prüfe die Berechtigung und ob keine andere App es nutzt.</string>
+    <string name="record_error_start_failed">Die Aufnahme konnte nicht gestartet werden: %1$s</string>
+    <string name="record_error_nothing_recorded">Es wurde nichts aufgenommen, daher wurde keine Besprechung gespeichert.</string>
+    <string name="record_error_generic">Bei der Aufnahme ist ein Problem aufgetreten (%1$s). Das bisher Aufgenommene bleibt erhalten.</string>
+    <string name="record_notice_dropped">Ein Teil des Tons konnte nicht rechtzeitig gespeichert werden und fehlt in der Aufnahme.</string>
+    <string name="record_notice_suspended">Die Aufnahme wurde unterbrochen: %1$s</string>
+    <string name="notification_channel_name">Aufnahme</string>
+    <string name="notification_title_recording">Aufnahme läuft</string>
+    <string name="notification_title_paused">Aufnahme pausiert</string>
+    <string name="notification_title_suspended">Aufnahme unterbrochen</string>
+    <string name="list_title">Besprechungen</string>
+    <string name="list_empty">Noch keine Besprechungen. Starte eine Aufnahme, um eine anzulegen.</string>
+    <string name="list_new_recording">Neue Aufnahme</string>
+    <string name="list_settings">Einstellungen</string>
+    <string name="list_duration">Dauer %1$s</string>
+    <string name="list_recovered">Wiederhergestellt</string>
+    <string name="list_unreadable">Metadaten nicht lesbar</string>
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_consent_heading">Einwilligung zur Aufnahme</string>
+    <string name="settings_storage_heading">Speicherordner</string>
+    <string name="settings_change_folder">Ordner ändern</string>
+    <string name="settings_about_heading">Über die App</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_license">Lizenz: GPL-3.0-or-later</string>
+    <string name="settings_privacy">Es verlassen keine Daten dieses Gerät. Die App hat keinen Netzwerkzugriff.</string>
+</resources>

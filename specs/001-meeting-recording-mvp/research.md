@@ -194,6 +194,9 @@ by explicit checks in [quickstart.md](quickstart.md).
   excluding everything.
 - **Rationale**: Principles I and VI; the allow-list check catches permissions that arrive
   transitively through a library.
+- **Found in practice**: `androidx.media3` (pulled in by CameraX) adds `ACCESS_NETWORK_STATE`; the manifest
+  removes it with `tools:node="remove"`, and `androidx.core` adds an app-scoped
+  `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, which the allow-list permits explicitly.
 - **Alternatives**: Manual review only (rejected: easy to miss merged permissions).
 
 ## R-12: F-Droid compatibility and reproducible build
@@ -209,6 +212,11 @@ by explicit checks in [quickstart.md](quickstart.md).
   under `fastlane/metadata/android/{en-US,de-DE}`.
 - **Rationale**: Principle II. No native code in Phase 1, so there is nothing to build from source
   yet; the rule stays recorded for later phases.
+- **Known exceptions to check with F-Droid**: several AndroidX artifacts (CameraX, Compose graphics-path) ship
+  native `.so` files inside their AARs. They are built by Google from AOSP source and fetched from Google Maven
+  like any other dependency, not vendored into this repository; the constitution's "no prebuilt binary
+  libraries" is read as "none committed to the repo and no native code of our own that is not built from
+  source". Confirm this reading with an F-Droid dry run (the same check as below).
 - **Verify**: Build the release variant twice on two machines and compare APKs; run an F-Droid
   build metadata dry run once the app has a public repository.
 
