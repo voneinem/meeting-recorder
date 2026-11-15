@@ -36,7 +36,9 @@ Each scenario maps to a user story in [spec.md](spec.md).
 ### S1: First launch and basic recording (Story 1, SC-001, SC-010)
 
 1. Start the app fresh. Expect the setup flow: choose a storage folder (for example create
-   `Documents/Meetings`), then the recording-consent notice. Recording cannot start before both.
+   `Documents/Meetings`) with a visible note that meetings are stored unencrypted and that a sync or
+   cloud service on the folder copies them off the phone, then the recording-consent notice.
+   Recording cannot start before both.
 2. Start a meeting without a title; record 60 s with the built-in microphone; switch the screen
    off for 20 s; open another app; return; pause 10 s; resume; stop.
 3. Expect in the storage folder: `YYYY-MM-DD_HH-mm-ss/` with `audio.wav`, `photos/`, `meeting.json`,
@@ -45,6 +47,8 @@ Each scenario maps to a user story in [spec.md](spec.md).
    title is the start date and time.
 4. Open the WAV in any audio player; expect continuous audio.
 5. Start a second meeting: the consent notice does not appear again.
+6. With a stopwatch, measure from opening the app to a running recording on a returning launch:
+   at most 10 seconds and 3 taps (SC-001).
 
 ### S2: External stereo microphone (Story 2, SC-006)
 
@@ -63,6 +67,9 @@ Each scenario maps to a user story in [spec.md](spec.md).
    about 30 000 ms with `channelsDuplicated: true`, the file is still stereo and continuous, and
    the second half is audible in both channels.
 3. Plug the receiver in again during a recording: expect only a notice, no source change.
+4. Repeat steps 1 and 2 with the screen off and the app in the background. Expect the same result; if
+   the built-in microphone cannot be opened, expect the recording to pause (Suspended) with a
+   notification offering Resume, and all earlier audio intact. Record the Android version and device.
 
 ### S4: Photos (Story 4, SC-005)
 
@@ -105,3 +112,11 @@ Each scenario maps to a user story in [spec.md](spec.md).
 
 1. Switch the device language between English and German; every screen, notification and
    permission explanation follows. `meeting.json` keys and `CLAUDE.md` stay English.
+
+### S10: Folder readable without the app (SC-007)
+
+1. Copy one finished meeting folder (with a source switch and at least two photos) to a computer.
+2. Give only that folder to Claude Code (or a person) and ask for: title, start time, duration,
+   channel layout, source switches with positions, and photo positions as `mm:ss`.
+3. Expect all answers to match `meeting.json`; note any question that needed help beyond
+   `CLAUDE.md` and fix the guide generator.

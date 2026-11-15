@@ -88,15 +88,22 @@ by explicit checks in [quickstart.md](quickstart.md).
   Pause stops `AudioRecord` capture (microphone indicator goes off) and resume starts it again.
 - **Rationale**: Only a foreground service keeps microphone access with screen off or app in
   background. Pausing by stopping capture respects privacy.
+- **Separate process**: The service runs in `android:process=":recording"`, so a UI crash or kill does
+  not end a recording (Principle III) and the crash-recovery test can kill the recording process on
+  its own. The UI talks to it through AIDL (platform feature, no dependency); see
+  [contracts/recording-service.md](contracts/recording-service.md), "Transport".
 - **Alternatives**: Keep capturing while paused and discard (rejected: privacy, battery). A plain
-  bound service (rejected: killed in background).
+  bound service (rejected: killed in background). Same-process service (rejected: a UI crash would
+  also end the recording).
 - **Verify on device**: Re-opening `AudioRecord` from the service while the app is in the
-  background (needed for unplug fallback) works on Android 11 through the latest release.
+  background (needed for unplug fallback) works on Android 11 through the latest release. If the
+  re-open is refused, the session moves to `Suspended` (auto-pause) with a notification offering
+  Resume, the same path as R-6; no audio is lost and the recording is never stopped silently.
 
 ## R-6: Phone calls and other apps taking the microphone
 
 - **Decision**: Register `AudioManager.AudioRecordingCallback`; when the client is reported as
-  silenced, or capture returns errors, the session enters `Interrupted` (auto-paused), keeps all
+  silenced, or capture returns errors, the session enters `Suspended` (auto-paused), keeps all
   audio so far, notifies the user, and offers Resume that starts capture again in the same
   meeting.
 - **Rationale**: Implements the spec edge case without losing data or pretending to record.

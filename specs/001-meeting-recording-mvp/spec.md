@@ -69,7 +69,8 @@ During a recording with the external microphone, the receiver is unplugged (acci
 1. **Given** a recording uses the external microphone, **When** it is unplugged, **Then** recording continues with the built-in microphone and the user sees a clear notice about the switch.
 2. **Given** a source switch happened, **When** the meeting is saved, **Then** the meeting data contains an entry with the time position of the switch, the previous source and the new source.
 3. **Given** a stereo recording switched to the built-in (mono) microphone, **When** the meeting is saved, **Then** the audio file keeps its stereo layout for the whole recording, and the switch entry makes clear that the remaining audio comes from a mono source.
-4. **Given** a recording uses the external microphone, **When** it is unplugged and plugged in again, **Then** the recording keeps using the built-in microphone and the user is informed that the external microphone is available again, without an automatic second switch.
+4. **Given** a recording uses the external microphone and the screen is off or the app is in the background, **When** it is unplugged and the built-in microphone cannot be opened, **Then** the recording pauses without losing any audio recorded so far, and a notification offers to resume with the built-in microphone.
+5. **Given** a recording uses the external microphone, **When** it is unplugged and plugged in again, **Then** the recording keeps using the built-in microphone and the user is informed that the external microphone is available again, without an automatic second switch.
 
 ---
 
@@ -145,7 +146,7 @@ If the app crashes, is killed by the system, or the phone restarts during a reco
 **Recording flow**
 
 - **FR-001**: Users MUST be able to start a new meeting with an optional title; if no title is given, the title MUST default to the current date and time.
-- **FR-002**: On first launch, the app MUST ask the user to choose a storage folder, and MUST NOT start a recording until one is chosen and accessible.
+- **FR-002**: On first launch, the app MUST ask the user to choose a storage folder, and MUST NOT start a recording until one is chosen and accessible. The folder-selection screen MUST state that meetings are stored unencrypted in the chosen folder and that any sync or cloud service on that folder will copy them off the device.
 - **FR-003**: Before the first recording, the app MUST show a notice that all participants must consent to being recorded, and the user MUST acknowledge it before recording starts. The acknowledgement MUST be remembered.
 - **FR-004**: While recording, the app MUST show the elapsed recorded time, a level meter for each recorded channel, and the controls pause, resume and stop.
 - **FR-005**: Paused time MUST NOT be part of the recorded audio or of the elapsed time.
@@ -158,15 +159,15 @@ If the app crashes, is killed by the system, or the phone restarts during a reco
 - **FR-009**: When an external microphone is connected, the app MUST suggest it as the source automatically; the user MUST be able to override the choice before recording starts.
 - **FR-010**: The RØDE Wireless PRO receiver MUST be supported as an external source, in both split (two-channel) and mixed (single-channel) modes.
 - **FR-011**: If the active source delivers two channels, the app MUST record stereo; otherwise it MUST record mono. The channel layout MUST be stated in the meeting data.
-- **FR-012**: If the external microphone is disconnected during recording, the recording MUST continue with the built-in microphone, with no more than a brief gap, and the user MUST be notified.
-- **FR-013**: Each source switch MUST be logged in the meeting data with its position on the recording timeline, the previous source and the new source.
+- **FR-012**: If the external microphone is disconnected during recording, the recording MUST continue with the built-in microphone, with a gap of no more than 2 seconds (SC-004), and the user MUST be notified.
+- **FR-013**: Each source switch MUST be logged in the meeting data with its timeline position (FR-020), the previous source and the new source.
 - **FR-014**: The channel layout of one meeting's audio MUST stay constant for the whole recording; when the new source has fewer channels, its signal MUST be copied into all channels, and the switch log entry MUST state that from this position on the channels no longer correspond to individual speakers.
 - **FR-015**: Users MUST NOT be able to change the source manually while a recording is running; the source is chosen before the recording starts. Reconnecting an external microphone during a recording MUST NOT switch the source automatically; the user MUST be informed that it is available and that it will be used from the next recording.
 
 **Photos**
 
 - **FR-016**: While recording (including while paused), users MUST be able to take a photo with a single tap without interrupting the recording.
-- **FR-017**: Each photo MUST be stored in the meeting's `photos/` subfolder and recorded in the meeting data with its position on the recording timeline.
+- **FR-017**: Each photo MUST be stored in the meeting's `photos/` subfolder and recorded in the meeting data with its timeline position (FR-020).
 
 **Storage and format**
 

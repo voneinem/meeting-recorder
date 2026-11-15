@@ -20,6 +20,7 @@ One recorded session = one folder.
 | `initialSourceId` | int | References a `sources[].id`. |
 | `sourceSwitches` | list of SourceSwitch | Ordered by `atFrame`. May be empty. |
 | `photos` | list of Photo | Ordered by `atFrame`. May be empty. |
+| `dropouts` | list of Dropout | Ordered by `atFrame`. Audio lost because the writer buffer overflowed. Usually empty. |
 
 Identity: the folder name (`YYYY-MM-DD_HH-mm-ss`, plus `-2`, `-3`, ... on collision). The folder
 name never changes after creation, not even on rename (see spec assumptions).
@@ -59,6 +60,17 @@ A microphone used in the meeting.
 | `reason` | enum | `device-removed` in Phase 1 (reserved for later reasons). |
 | `channelsDuplicated` | boolean | `true` when the new source has fewer channels than the file and its signal is copied into all channels; from this position on the channels no longer correspond to individual speakers. |
 
+## Dropout
+
+Recorded when saving audio falls behind and the writer buffer overflows: the newest audio that does not
+fit is dropped, capture and the timeline keep running (the dropped frames are not part of the timeline).
+
+| Field | Type | Rules |
+|-------|------|-------|
+| `atFrame` | long | Position on the audio timeline at which audio is missing. `0 <= atFrame <= durationFrames`. |
+| `atMs` | long | Derived from `atFrame`. |
+| `droppedFrames` | long | Number of frames that were captured but not stored (`> 0`). |
+
 ## Photo
 
 | Field | Type | Rules |
@@ -73,7 +85,7 @@ A microphone used in the meeting.
 2. `channels` matches `channelLayout`; `sampleRate > 0`; for every source, `channels <= deliveredChannels` and `channels <= 2`.
 3. Every `atFrame` is within `[0, durationFrames]`; lists are sorted ascending.
 4. Every `atMs` equals the value derived from `atFrame` and `sampleRate`.
-5. All referenced source ids exist; a switch changes the source.
+5. All referenced source ids exist; a switch changes the source; every dropout has `droppedFrames > 0`.
 6. Photo file names match `photos/photo-NNN.jpg` with NNN strictly increasing from 001.
 7. A readable-but-invalid file is reported with the list of violations; the meeting is still
    listed with what can be determined (spec edge case).
@@ -90,7 +102,7 @@ Owned by the foreground service; rendered by the UI.
 | `activeSource` | Source | Currently capturing source. |
 | `availableSources` | list of Source | From `AudioDeviceCallback`. |
 | `suggestedSource` | Source or none | First external USB input. |
-| `lastEvent` | event | `SourceSwitched`, `ExternalAvailableAgain`, `Interrupted`, `StorageLow`, `LimitApproaching`, and so on, for user notices. |
+| `lastEvent` | event | `SourceSwitched`, `ExternalAvailableAgain`, `Suspended`, `StorageLow`, `LimitApproaching`, and so on, for user notices. |
 
 ## State machine
 
@@ -99,9 +111,9 @@ Owned by the foreground service; rendered by the UI.
  Idle ───────────────► Recording ───────────────► Paused ──────────────────────┐
   ▲                      │  ▲  ◄─────────────── │   │                          │
   │                      │  │      resume()      │   │ stop()                   ▼
-  │          interrupt   │  │ resume()           │   └──────────────────► Finalizing ──► Completed
+  │          suspend     │  │ resume()           │   └──────────────────► Finalizing ──► Completed
   │       (call/other    ▼  │                    │                              │
-  │        app/errors) Interrupted ──────────────┘                              │
+  │        app/errors) Suspended ──────────────┘                              │
   │                      │ stop()                                               │
   │                      └──────────────────────────────────────────────────────┘
   └──────────────────────────────────────────────────────────────────────────────┘
@@ -110,7 +122,7 @@ Owned by the foreground service; rendered by the UI.
 - `Idle`: no active meeting; source list and suggestion are live.
 - `Recording`: capture running; photos allowed; source switch on unplug stays in this state.
 - `Paused`: capture stopped by the user; photos allowed (position is the pause point).
-- `Interrupted`: capture stopped by the system (call, another app, errors); user notified; Resume
+- `Suspended`: capture stopped by the system (call, another app, errors); user notified; Resume
   or Stop.
 - `Finalizing`: write final header and metadata, set `status: complete`, create/refresh
   `CLAUDE.md`, then back to `Idle`.
@@ -125,6 +137,5 @@ Owned by the foreground service; rendered by the UI.
 |-----|---------|
 | `storageTreeUri` | Persisted SAF tree of the storage folder. |
 | `consentAcknowledged` | Whether the recording-consent notice was accepted. |
-| `lastSourceId` | Optional convenience: last chosen source type. |
 
 These are app-local conveniences; deleting them never affects any meeting folder.

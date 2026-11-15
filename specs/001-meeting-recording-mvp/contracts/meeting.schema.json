@@ -13,7 +13,8 @@
     "sources",
     "initialSourceId",
     "sourceSwitches",
-    "photos"
+    "photos",
+    "dropouts"
   ],
   "properties": {
     "schemaVersion": { "const": 1 },
@@ -38,6 +39,10 @@
     "photos": {
       "type": "array",
       "items": { "$ref": "#/$defs/photo" }
+    },
+    "dropouts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/dropout" }
     }
   },
   "additionalProperties": true,
@@ -93,6 +98,16 @@
         "toSourceId": { "type": "integer", "minimum": 0 },
         "reason": { "enum": ["device-removed"] },
         "channelsDuplicated": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "dropout": {
+      "type": "object",
+      "required": ["atFrame", "atMs", "droppedFrames"],
+      "properties": {
+        "atFrame": { "type": "integer", "minimum": 0 },
+        "atMs": { "type": "integer", "minimum": 0 },
+        "droppedFrames": { "type": "integer", "minimum": 1 }
       },
       "additionalProperties": true
     },

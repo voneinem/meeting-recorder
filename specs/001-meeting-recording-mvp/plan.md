@@ -48,7 +48,9 @@ proprietary SDK. Playback uses the platform `MediaPlayer` (no extra dependency).
 App preferences (storage tree URI, consent acknowledged) in `SharedPreferences`/DataStore
 (derived or app-local state only). No database.
 
-**Testing**: JUnit 5 + kotlin.test in `:core` (JVM, no emulator, full coverage of format logic);
+**Testing**: JUnit 5 + kotlin.test in `:core` (JVM, no emulator, full coverage of format logic;
+meeting JSON is also validated against `contracts/meeting.schema.json` with a test-only FOSS JSON
+Schema validator);
 JVM unit tests in `:app` for non-UI logic (channel selection, state machine, hard-coded string
 scan); a small number of instrumented tests for service, SAF and camera on a device. Manual
 hardware validation with the RØDE Wireless PRO receiver ([quickstart.md](quickstart.md)).
@@ -125,10 +127,10 @@ core/                                 # pure Kotlin JVM module, NO Android depen
 ├── build.gradle.kts
 └── src/
     ├── main/kotlin/app/meetingrecorder/core/
-    │   ├── model/                    # MeetingMetadata, AudioInfo, Source, SourceSwitch, Photo, Status
+    │   ├── model/                    # MeetingMetadata, AudioInfo, Source, SourceSwitch, Dropout, Photo, Status, MeetingEditor
     │   ├── json/                     # MeetingJson codec, schemaVersion handling, validation
     │   ├── time/                     # Timeline: frames <-> ms, formatting, position validation
-    │   ├── wav/                      # WavHeader build/parse/repair on a SeekableStore abstraction
+    │   ├── wav/                      # WavHeader build/parse/repair on a SeekableStore abstraction, RecordingLimits
     │   ├── folder/                   # MeetingFolderLayout: names, collision suffix, path rules
     │   ├── guide/                    # ClaudeGuide: generates the English CLAUDE.md for a meeting
     │   ├── level/                    # LevelMeter: peak/RMS per channel from PCM16 buffers
@@ -141,15 +143,19 @@ app/                                  # Android application module
 └── src/
     ├── main/
     │   ├── AndroidManifest.xml
+    │   ├── aidl/app/meetingrecorder/ # IRecordingService, IRecordingCallback, parcelable state/event types
     │   ├── kotlin/app/meetingrecorder/
     │   │   ├── MainActivity.kt
     │   │   ├── MeetingRecorderApp.kt
     │   │   ├── ui/                   # Compose: setup (folder + consent), record, list, playback, settings
     │   │   │   └── theme/
-    │   │   ├── recording/            # RecordingService, RecordingSession, AudioCapture, WavWriter,
-    │   │   │                         #   SourceMonitor (AudioDeviceCallback), RecordingNotification
+    │   │   ├── recording/            # RecordingService (own process), RecordingController, RecordingSession,
+    │   │   │                         #   RecordingStateMachine, AudioCapture, WavWriter, MeetingFileWriter,
+    │   │   │                         #   SourceMonitor (AudioDeviceCallback), SuspensionMonitor, RecoveryRunner,
+    │   │   │                         #   RecordingNotification
     │   │   ├── camera/               # CameraX ImageCapture binding, photo saving
-    │   │   ├── storage/              # SafMeetingStorage (DocumentFile/DocumentsContract), tree permission
+    │   │   ├── storage/              # SafMeetingStorage (DocumentFile/DocumentsContract), ParcelSeekableStore, StorageGuard,
+    │   │   │                         #   MeetingRepository, tree permission
     │   │   ├── playback/             # MediaPlayer wrapper, photo jump support
     │   │   └── permissions/          # Permission rationale flow
     │   └── res/
