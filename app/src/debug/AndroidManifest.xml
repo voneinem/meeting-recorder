@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Debug builds only: a document tree backed by a folder, so instrumented tests can use the
+         Storage Access Framework without the system folder picker. Not part of the release app. -->
+    <application>
+        <provider
+            android:name="app.meetingrecorder.debug.TestDocumentsProvider"
+            android:authorities="app.meetingrecorder.testdocuments"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS" />
+    </application>
+</manifest>

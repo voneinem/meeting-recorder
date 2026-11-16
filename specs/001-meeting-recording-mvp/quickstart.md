@@ -23,6 +23,25 @@ Entity and format details are in [data-model.md](data-model.md) and [contracts/]
 
 Expected: all green. `:core` must build without the Android Gradle plugin.
 
+## Instrumented tests (device or emulator)
+
+Three tests need a device: `SafMeetingStorageTest`, `RecordingServiceTest` and `CrashRecoveryTest`.
+They use a document tree served by a debug-only provider (`app/src/debug/`), so they never touch
+your real storage folder, and they grant the microphone permission themselves. Keep the screen
+unlocked while they run.
+
+**Do not use `./gradlew connectedDebugAndroidTest` on a phone whose app data you want to keep:** Gradle
+uninstalls the app afterwards, which also deletes the storage-folder choice. Install and run by hand:
+
+```bash
+./gradlew :app:assembleDebug :app:assembleDebugAndroidTest
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb shell am instrument -w -r app.meetingrecorder.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+Expected: `OK (7 tests)`. Add `-e class app.meetingrecorder.recording.CrashRecoveryTest` to run one class.
+
 ## Install
 
 ```bash

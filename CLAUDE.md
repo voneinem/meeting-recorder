@@ -17,6 +17,9 @@ into open meeting folders. Specification, plan, contracts and tasks are in
   `gradle/verification-metadata.xml` with `./gradlew --write-verification-metadata sha256 help`
   and review the diff.
 - Manual scenarios S1 to S10 are in `specs/001-meeting-recording-mvp/quickstart.md`.
+- Instrumented tests (`app/src/androidTest`) need a device. Do not run `connectedDebugAndroidTest`
+  on a phone with real app data (Gradle uninstalls the app afterwards); install the two APKs and use
+  `adb shell am instrument`, see the quickstart. The tests use the debug-only `TestDocumentsProvider`.
 
 ## Module boundaries
 
