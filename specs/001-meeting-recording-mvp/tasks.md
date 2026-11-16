@@ -248,16 +248,16 @@ delete one after confirming; list and storage folder reflect each change.
 
 **Purpose**: Release readiness, documentation and verification across stories
 
-- [ ] T099 [P] Create F-Droid store texts in `fastlane/metadata/android/en-US/` and `fastlane/metadata/android/de-DE/` (`title.txt`, `short_description.txt`, `full_description.txt`)
-- [ ] T100 [P] Write the repository `CLAUDE.md` (English): build and test commands from quickstart.md, module boundaries (`:core` stays pure Kotlin), the constitution's key rules, and the folder format reference link to `specs/001-meeting-recording-mvp/contracts/meeting-folder.md`
-- [ ] T101 [P] Write `README.md` (English): what the app does, privacy statement, how to build, how to read a meeting folder without the app, license
-- [ ] T102 [P] Accessibility pass across `app/src/main/kotlin/PKG/ui/`: content descriptions via string resources, touch target sizes, contrast in light and dark, TalkBack order of the record screen controls
-- [ ] T103 Verify localization end to end: `./gradlew :app:lintRelease` with no `MissingTranslation`/`ExtraTranslation`, `HardcodedStringsTest` green, switch the device between English and German and walk all screens (quickstart S9); confirm `meeting.json` keys and `CLAUDE.md` stay English
-- [ ] T104 Verify privacy and permissions (quickstart S8): airplane mode full run, `aapt dump permissions` equals the allow-list, no `INTERNET`, `verifyNoForbiddenDependencies` green
+- [X] T099 [P] Create F-Droid store texts in `fastlane/metadata/android/en-US/` and `fastlane/metadata/android/de-DE/` (`title.txt`, `short_description.txt`, `full_description.txt`) (en-US and de-DE: title, short description at most 80 characters, full description)
+- [X] T100 [P] Write the repository `CLAUDE.md` (English): build and test commands from quickstart.md, module boundaries (`:core` stays pure Kotlin), the constitution's key rules, and the folder format reference link to `specs/001-meeting-recording-mvp/contracts/meeting-folder.md` (root `CLAUDE.md`)
+- [X] T101 [P] Write `README.md` (English): what the app does, privacy statement, how to build, how to read a meeting folder without the app, license (README.md rewritten)
+- [ ] T102 [P] Accessibility pass across `app/src/main/kotlin/PKG/ui/`: content descriptions via string resources, touch target sizes, contrast in light and dark, TalkBack order of the record screen controls Not done yet: needs a TalkBack pass on a device (focus order of the record screen, contrast in light mode).
+- [X] T103 Verify localization end to end: `./gradlew :app:lintRelease` with no `MissingTranslation`/`ExtraTranslation`, `HardcodedStringsTest` green, switch the device between English and German and walk all screens (quickstart S9); confirm `meeting.json` keys and `CLAUDE.md` stay English (2026-11-16: `:app:lintRelease` clean; HardcodedStringsTest green; app language switched to English and the record, list and settings screens checked on the phone, German checked throughout earlier; notification and permission texts exist in both files)
+- [ ] T104 Verify privacy and permissions (quickstart S8): airplane mode full run, `aapt dump permissions` equals the allow-list, no `INTERNET`, `verifyNoForbiddenDependencies` green Verified 2026-11-16: `aapt2 dump permissions` lists exactly RECORD_AUDIO, CAMERA, POST_NOTIFICATIONS, FOREGROUND_SERVICE, FOREGROUND_SERVICE_MICROPHONE plus the app-scoped dynamic-receiver permission; no INTERNET; `verifyNoForbiddenDependencies` green. Not done: the airplane-mode run (it would also cut the wireless debugging link).
 - [ ] T105 Verify reproducibility (research R-12): build the release variant twice on two clean checkouts or machines and compare the APKs; fix any non-determinism (timestamps, paths)
 - [ ] T106 Run quickstart scenario S7 (3 h stereo, screen off) and the limit unit tests; record battery and storage observations
 - [ ] T107 Run the full automated check set from quickstart.md and the manual scenarios S1 to S10; fix failures; record the outcome in the PR description
-- [ ] T108 Clean up leftovers: search for `TODO`, unused dependencies in `gradle/libs.versions.toml`, unused strings in both language files
+- [X] T108 Clean up leftovers: search for `TODO`, unused dependencies in `gradle/libs.versions.toml`, unused strings in both language files (no TODO markers; removed the unused `kotlinx-coroutines-core` catalog entry; lint UnusedResources is clean with the temporary ignores removed)
 
 ---
 

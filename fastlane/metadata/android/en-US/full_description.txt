@@ -1,0 +1,22 @@
+Meeting Recorder records the audio of a meeting and lets you take photos of whiteboards or slides while it runs. Every photo is placed at the exact moment of the recording where you took it.
+
+<b>Everything stays on your phone</b>
+No network access, no tracking, no accounts, no cloud. The app has no INTERNET permission at all.
+
+<b>Recording</b>
+• Built-in microphone or an external USB microphone, mono or stereo (stereo when the microphone delivers two channels)
+• Level meter per channel, elapsed time, pause and resume
+• Keeps recording with the screen off and in the background
+• If the external microphone is unplugged, the recording continues on the built-in microphone and the switch is noted with its position on the timeline
+• After a crash, what was recorded is repaired and marked as recovered; when storage runs full, the recording is saved up to that point
+
+<b>Photos</b>
+Take photos with one tap during the recording. During playback, tap a photo to jump to its moment.
+
+<b>Open files</b>
+Each meeting is a plain folder: audio.wav, a photos folder, meeting.json with all details and a CLAUDE.md that explains the format. You can read it without the app, or give the folder to an AI assistant such as Claude Code to get a summary, minutes or action items.
+
+<b>Please note</b>
+Meetings are stored unencrypted in the folder you choose. If that folder is synchronized by another app, the meetings are copied off your phone by that app. Always make sure everyone who is recorded has agreed to it.
+
+Free software under the GPL-3.0-or-later license. Transcription is not part of this version.
