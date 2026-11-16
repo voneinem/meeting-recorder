@@ -53,6 +53,7 @@ import app.meetingrecorder.permissions.CameraPermissionCard
 import app.meetingrecorder.permissions.PermissionRationale
 import app.meetingrecorder.permissions.RecordPermissions
 import app.meetingrecorder.recording.Phase
+import app.meetingrecorder.recording.localizedSourceName
 import app.meetingrecorder.ui.components.LevelMeterBar
 
 /**
@@ -241,7 +242,7 @@ private fun ActiveContent(
     )
     if (activeSourceName.isNotEmpty()) {
         Text(
-            text = stringResource(R.string.source_active, activeSourceName, channelLabel(levels.size)),
+            text = stringResource(R.string.source_active, localizedSourceName(LocalContext.current, activeSourceName), channelLabel(levels.size)),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,

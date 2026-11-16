@@ -13,11 +13,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import app.meetingrecorder.R
 import app.meetingrecorder.core.channels.SourceOption
+import app.meetingrecorder.recording.localizedSourceName
 
 /** The channel layout a source would produce, as the label shown to the user. */
 @Composable
@@ -34,6 +36,7 @@ fun SourcePicker(
     onSelect: (SourceOption) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     Column(modifier = modifier.fillMaxWidth().selectableGroup(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(text = stringResource(R.string.source_title), style = MaterialTheme.typography.titleMedium)
         state.options.forEach { option ->
@@ -47,7 +50,7 @@ fun SourcePicker(
             ) {
                 RadioButton(selected = selected, onClick = null)
                 Column(modifier = Modifier.padding(start = 12.dp)) {
-                    Text(text = option.info.name, style = MaterialTheme.typography.bodyLarge)
+                    Text(text = localizedSourceName(context, option.info.name), style = MaterialTheme.typography.bodyLarge)
                     val suffix = if (option.id == state.suggestedId) " · ${stringResource(R.string.source_suggested)}" else ""
                     Text(
                         text = channelLabel(option.recordedChannels) + suffix,

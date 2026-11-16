@@ -53,7 +53,7 @@ class RecordingNotification(private val context: Context) {
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(title))
-            .setContentText(state.activeSourceName.ifEmpty { null })
+            .setContentText(state.activeSourceName.takeIf { it.isNotEmpty() }?.let { localizedSourceName(context, it) })
             .setContentIntent(open)
             .setOngoing(true)
             .setOnlyAlertOnce(true)

@@ -106,6 +106,7 @@
 
     <!-- Nutzergeschichten 2 und 3: Quellen, Stereo, Ausweichen -->
     <string name="source_title">Mikrofon</string>
+    <string name="source_builtin">Eingebautes Mikrofon</string>
     <string name="source_suggested">Empfohlen</string>
     <string name="source_stereo">Stereo</string>
     <string name="source_mono">Mono</string>

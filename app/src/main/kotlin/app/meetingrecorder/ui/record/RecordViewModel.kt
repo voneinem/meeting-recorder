@@ -17,6 +17,7 @@ import app.meetingrecorder.core.channels.SourceOption
 import app.meetingrecorder.core.channels.SourceSelector
 import app.meetingrecorder.recording.RecordingController
 import app.meetingrecorder.recording.SourceMonitor
+import app.meetingrecorder.recording.localizedSourceName
 import app.meetingrecorder.recording.RecordingEvent
 import app.meetingrecorder.recording.RecordingSession
 import app.meetingrecorder.recording.RecordingState
@@ -178,7 +179,10 @@ class RecordViewModel(application: Application) : AndroidViewModel(application) 
         }
         is RecordingEvent.StorageLow ->
             Notice.Text(R.string.storage_low, listOf(Formatter.formatShortFileSize(getApplication(), bytesLeft)))
-        is RecordingEvent.SourceSwitched -> Notice.Text(R.string.record_notice_source_switched, listOf(fromName, toName))
+        is RecordingEvent.SourceSwitched -> Notice.Text(
+            R.string.record_notice_source_switched,
+            listOf(localizedSourceName(getApplication(), fromName), localizedSourceName(getApplication(), toName)),
+        )
         is RecordingEvent.ExternalAvailableAgain -> Notice.Text(R.string.record_notice_source_available, listOf(name))
         RecordingEvent.StorageFull -> Notice.Text(R.string.storage_full)
         is RecordingEvent.LimitApproaching -> {

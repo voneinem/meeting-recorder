@@ -106,6 +106,7 @@
 
     <!-- User stories 2 and 3: sources, stereo, fallback -->
     <string name="source_title">Microphone</string>
+    <string name="source_builtin">Built-in microphone</string>
     <string name="source_suggested">Suggested</string>
     <string name="source_stereo">Stereo</string>
     <string name="source_mono">Mono</string>

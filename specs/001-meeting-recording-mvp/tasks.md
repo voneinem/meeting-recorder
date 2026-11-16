@@ -238,7 +238,7 @@ delete one after confirming; list and storage folder reflect each change.
 - [X] T095 [US5] Implement delete in `ui/list/MeetingListScreen.kt` and `MeetingListViewModel.kt`: a confirmation dialog naming the meeting; only after confirmation delete the whole folder through `SafMeetingStorage`; cancel changes nothing (FR-030)
 - [X] T096 [US5] Make the list robust and complete in `MeetingRepository.kt` and `MeetingListScreen.kt`: pick up folders added from outside the app on every resume, show unreadable folders with what can be determined, keep unknown files untouched, show title, start date and duration (FR-026; depends on T094, T095)
 - [X] T097 [US5] Add the `playback/{folder}` route in `ui/AppNavigation.kt` and open it from list items (depends on T093, T096)
-- [ ] T098 [US5] Run quickstart scenario S5 on a device and record the result in the PR description
+- [X] T098 [US5] Run quickstart scenario S5 on a device and record the result in the PR description (2026-11-16, Gigaset E940, Android 14: list shows meetings and a folder copied in over adb after resume; playback with seek bar and position; tapping the 00:10 photo jumped to 00:10 with the photo shown upright; rename changed only the title, kept the folder name and regenerated `CLAUDE.md`; delete asked first, cancel kept everything, confirm removed the whole folder; no PR yet)
 
 **Checkpoint**: All six user stories are independently functional; Phase 1 feature-complete.
 
