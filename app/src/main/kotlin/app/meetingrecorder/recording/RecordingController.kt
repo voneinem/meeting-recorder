@@ -5,7 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.net.Uri
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.RemoteException
 import androidx.core.content.ContextCompat
 import app.meetingrecorder.ipc.IRecordingCallback
@@ -22,6 +24,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -45,9 +48,14 @@ class RecordingController(context: Context) {
     @Volatile
     private var connected: CompletableDeferred<IRecordingService>? = null
 
+    private val mainHandler = Handler(Looper.getMainLooper())
+
     private val callback = object : IRecordingCallback.Stub() {
         override fun onState(state: RecordingStateParcel) {
-            _state.value = state.toState()
+            val next = state.toState()
+            val previous = _state.getAndUpdate { next }
+            // The recording is over: let go of the service so the next one starts a fresh instance.
+            if (previous.phase != Phase.IDLE && next.phase == Phase.IDLE) mainHandler.post { releaseService() }
         }
 
         override fun onEvent(event: RecordingEventParcel) {
@@ -71,6 +79,23 @@ class RecordingController(context: Context) {
         override fun onServiceDisconnected(name: ComponentName) {
             service = null
             _state.value = RecordingState()
+        }
+    }
+
+    /**
+     * Unbinds from the service after a recording. A service that stays bound outlives its recording,
+     * and the next recording would reuse that instance. The system then denies it the right to keep
+     * using the microphone in the background (foreground-service "while in use" restriction), so the
+     * capture is silenced a few seconds after the app leaves the screen. A new instance is granted it.
+     */
+    private fun releaseService() {
+        if (_state.value.phase != Phase.IDLE) return // a new recording already started
+        service = null
+        connected = null
+        try {
+            context.unbindService(connection)
+        } catch (_: IllegalArgumentException) {
+            // not bound any more
         }
     }
 

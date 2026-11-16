@@ -17,6 +17,11 @@ events below as parcelables; no extra library is needed. Consequences:
   reads the app preferences. Persisted SAF permissions belong to the app and work in both processes.
 - When the UI process dies and later returns, it re-binds and receives the current state snapshot;
   the recording and the notification continue meanwhile.
+- The UI process releases (unbinds) the service as soon as the state returns to Idle. A service that
+  stays bound outlives its recording, and the next recording reuses that instance: the system then
+  reports `mAllowWhileInUsePermissionInFgsReason=DENIED` and silences the capture ("App op 27
+  missing") a few seconds after the app leaves the foreground. Every recording must start a fresh
+  service instance; verified on a Gigaset E940 (Android 14) with two recordings in a row.
 - Application-level one-time work (for example crash recovery) runs only in the main process.
 
 ## Commands (UI → service)
