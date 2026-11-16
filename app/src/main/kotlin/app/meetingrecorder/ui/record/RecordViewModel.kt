@@ -88,7 +88,14 @@ class RecordViewModel(application: Application) : AndroidViewModel(application) 
     init {
         sourceMonitor.start()
         controller.attachIfRunning()
-        viewModelScope.launch { controller.events.collect { _notice.value = it.toNotice() } }
+        viewModelScope.launch {
+            controller.events.collect { event ->
+                _notice.value = event.toNotice(
+                    formatBytes = { Formatter.formatShortFileSize(getApplication(), it) },
+                    sourceName = { localizedSourceName(getApplication(), it) },
+                )
+            }
+        }
     }
 
     fun selectSource(option: SourceOption) {
@@ -155,41 +162,5 @@ class RecordViewModel(application: Application) : AndroidViewModel(application) 
     override fun onCleared() {
         sourceMonitor.stop()
         camera.unbind()
-    }
-
-    private companion object {
-        const val SECONDS_PER_MINUTE = 60L
-    }
-
-    private fun RecordingEvent.toNotice(): Notice? = when (this) {
-        is RecordingEvent.Error -> when (code) {
-            "no_microphone_permission" -> Notice.Text(R.string.record_error_no_microphone)
-            "start_failed" -> Notice.Text(R.string.record_error_start_failed, listOf(detail.orEmpty()))
-            "nothing_recorded" -> Notice.Text(R.string.record_error_nothing_recorded)
-            "storage_too_small" -> Notice.Text(R.string.record_error_storage_too_small)
-            "photo_file_failed" -> Notice.Text(R.string.photo_failed)
-            else -> Notice.Text(R.string.record_error_generic, listOf(code))
-        }
-        is RecordingEvent.AudioDropped -> Notice.Text(R.string.record_notice_dropped)
-        is RecordingEvent.Suspended -> when (reason) {
-            RecordingSession.REASON_MICROPHONE_TAKEN -> Notice.Text(R.string.record_notice_suspended_taken)
-            RecordingSession.REASON_READ_ERROR -> Notice.Text(R.string.record_notice_suspended_read_error)
-            RecordingSession.REASON_FALLBACK_FAILED -> Notice.Text(R.string.record_notice_suspended_fallback)
-            else -> Notice.Text(R.string.record_notice_suspended, listOf(reason))
-        }
-        is RecordingEvent.StorageLow ->
-            Notice.Text(R.string.storage_low, listOf(Formatter.formatShortFileSize(getApplication(), bytesLeft)))
-        is RecordingEvent.SourceSwitched -> Notice.Text(
-            R.string.record_notice_source_switched,
-            listOf(localizedSourceName(getApplication(), fromName), localizedSourceName(getApplication(), toName)),
-        )
-        is RecordingEvent.ExternalAvailableAgain -> Notice.Text(R.string.record_notice_source_available, listOf(name))
-        RecordingEvent.StorageFull -> Notice.Text(R.string.storage_full)
-        is RecordingEvent.LimitApproaching -> {
-            val minutes = ((secondsLeft + SECONDS_PER_MINUTE - 1) / SECONDS_PER_MINUTE).toInt()
-            Notice.Plural(R.plurals.limit_approaching, minutes)
-        }
-        RecordingEvent.LimitReached -> Notice.Text(R.string.limit_reached)
-        else -> null
     }
 }
