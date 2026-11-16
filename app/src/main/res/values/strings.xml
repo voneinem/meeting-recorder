@@ -65,4 +65,16 @@
     <string name="settings_version">Version %1$s</string>
     <string name="settings_license">License: GPL-3.0-or-later</string>
     <string name="settings_privacy">No data leaves this device. The app has no network access.</string>
+
+    <!-- User story 6: interruptions, storage and limits -->
+    <string name="storage_low">Storage is almost full (%1$s left). Free up space soon.</string>
+    <string name="storage_full">Storage is full. The recording was stopped and saved up to this point.</string>
+    <plurals name="limit_approaching">
+        <item quantity="one">The maximum recording length is reached in %1$d minute. The recording will then stop and be saved.</item>
+        <item quantity="other">The maximum recording length is reached in %1$d minutes. The recording will then stop and be saved.</item>
+    </plurals>
+    <string name="limit_reached">The maximum recording length was reached. The recording was stopped and saved.</string>
+    <string name="record_error_storage_too_small">There is not enough free storage to start a recording.</string>
+    <string name="record_notice_suspended_taken">The microphone was taken by another app or a call. Your recording is paused; tap Resume to continue.</string>
+    <string name="record_notice_suspended_read_error">Reading from the microphone failed. Your recording is paused; tap Resume to continue.</string>
 </resources>

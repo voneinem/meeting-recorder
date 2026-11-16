@@ -65,4 +65,16 @@
     <string name="settings_version">Version %1$s</string>
     <string name="settings_license">Lizenz: GPL-3.0-or-later</string>
     <string name="settings_privacy">Es verlassen keine Daten dieses Gerät. Die App hat keinen Netzwerkzugriff.</string>
+
+    <!-- User story 6: interruptions, storage and limits -->
+    <string name="storage_low">Der Speicher ist fast voll (noch %1$s frei). Schaffe bald Platz.</string>
+    <string name="storage_full">Der Speicher ist voll. Die Aufnahme wurde beendet und bis hierhin gespeichert.</string>
+    <plurals name="limit_approaching">
+        <item quantity="one">Die maximale Aufnahmelänge ist in %1$d Minute erreicht. Die Aufnahme wird dann beendet und gespeichert.</item>
+        <item quantity="other">Die maximale Aufnahmelänge ist in %1$d Minuten erreicht. Die Aufnahme wird dann beendet und gespeichert.</item>
+    </plurals>
+    <string name="limit_reached">Die maximale Aufnahmelänge wurde erreicht. Die Aufnahme wurde beendet und gespeichert.</string>
+    <string name="record_error_storage_too_small">Es ist nicht genug freier Speicher vorhanden, um eine Aufnahme zu starten.</string>
+    <string name="record_notice_suspended_taken">Das Mikrofon wurde von einer anderen App oder einem Anruf belegt. Deine Aufnahme ist pausiert; tippe auf Fortsetzen.</string>
+    <string name="record_notice_suspended_read_error">Das Lesen vom Mikrofon ist fehlgeschlagen. Deine Aufnahme ist pausiert; tippe auf Fortsetzen.</string>
 </resources>

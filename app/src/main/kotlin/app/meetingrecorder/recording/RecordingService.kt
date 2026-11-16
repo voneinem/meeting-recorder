@@ -40,7 +40,10 @@ class RecordingService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // A foreground service must call startForeground soon after it was started from the UI.
         startForegroundNow()
-        if (intent?.action == ACTION_STOP) worker.execute { session.stop() }
+        when (intent?.action) {
+            ACTION_STOP -> worker.execute { session.stop() }
+            ACTION_RESUME -> worker.execute { session.resume() }
+        }
         return START_NOT_STICKY
     }
 
@@ -130,5 +133,6 @@ class RecordingService : Service() {
 
     companion object {
         const val ACTION_STOP = "app.meetingrecorder.action.STOP_RECORDING"
+        const val ACTION_RESUME = "app.meetingrecorder.action.RESUME_RECORDING"
     }
 }

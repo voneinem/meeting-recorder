@@ -121,7 +121,7 @@ mono, pause excluded from duration) and `CLAUDE.md`, listed in the app.
 - [X] T053 [US1] Wire navigation in `ui/AppNavigation.kt`: `setup` to `consent` to `record`, `record` to `list`, back handling during a recording keeps the service running (depends on T037, T039, T050, T052)
 - [X] T054 [US1] Add the settings/about screen `app/src/main/kotlin/PKG/ui/settings/SettingsScreen.kt` (re-read the consent notice, storage folder with change option, app version, license, "no data leaves the device" statement), with strings in both language files and a navigation entry from the list
 - [ ] T055 [US1] Write `app/src/androidTest/kotlin/PKG/recording/RecordingServiceTest.kt`: with `RECORD_AUDIO` granted, record about 5 s through `RecordingController`, pause 2 s, resume, stop; assert the meeting folder contents, valid `meeting.json` (via `MeetingValidator`), a parseable WAV whose frame count matches `durationFrames`, and that the pause is excluded
-- [ ] T056 [US1] Run quickstart scenario S1 on a device and record the result in the PR description
+- [X] T056 [US1] Run quickstart scenario S1 on a device and record the result in the PR description. **Result 2026-11-15: passed** on Android 14 (E940-2849-01); two meetings pulled from the phone and verified: valid `meeting.json`, WAV header sizes equal the file length, `durationFrames` equals the audio frames, `durationMs` derived correctly, audio not silent, `CLAUDE.md` present
 
 **Checkpoint**: User Story 1 works end to end: an installable app that records and saves meetings.
 

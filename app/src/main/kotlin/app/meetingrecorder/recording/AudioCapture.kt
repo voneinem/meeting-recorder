@@ -31,6 +31,9 @@ class AudioCapture(
     @Volatile
     private var running = false
 
+    /** The audio session of the running capture, used to recognize it in recording callbacks. */
+    val audioSessionId: Int get() = record?.audioSessionId ?: 0
+
     @SuppressLint("MissingPermission") // checked by the caller before the session starts
     fun start() {
         check(record == null) { "AudioCapture can only be started once" }

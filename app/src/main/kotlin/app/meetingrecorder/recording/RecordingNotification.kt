@@ -44,7 +44,13 @@ class RecordingNotification(private val context: Context) {
             Intent(context, RecordingService::class.java).setAction(RecordingService.ACTION_STOP),
             PendingIntent.FLAG_IMMUTABLE,
         )
-        return NotificationCompat.Builder(context, CHANNEL_ID)
+        val resume = PendingIntent.getService(
+            context,
+            1,
+            Intent(context, RecordingService::class.java).setAction(RecordingService.ACTION_RESUME),
+            PendingIntent.FLAG_IMMUTABLE,
+        )
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(context.getString(title))
             .setContentIntent(open)
@@ -55,8 +61,10 @@ class RecordingNotification(private val context: Context) {
             .setShowWhen(running)
             .setUsesChronometer(running)
             .setWhen(System.currentTimeMillis() - state.elapsedMs)
-            .addAction(0, context.getString(R.string.action_stop), stop)
-            .build()
+        if (state.phase == Phase.PAUSED || state.phase == Phase.SUSPENDED) {
+            builder.addAction(0, context.getString(R.string.action_resume), resume)
+        }
+        return builder.addAction(0, context.getString(R.string.action_stop), stop).build()
     }
 
     fun update(state: RecordingState) {

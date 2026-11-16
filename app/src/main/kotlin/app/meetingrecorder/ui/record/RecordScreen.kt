@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -98,7 +99,11 @@ fun RecordScreen(
         notice?.let { current ->
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(text = stringResource(current.message, *current.args.toTypedArray()))
+                    val text = when (current) {
+                        is Notice.Text -> stringResource(current.message, *current.args.toTypedArray())
+                        is Notice.Plural -> pluralStringResource(current.message, current.quantity, current.quantity)
+                    }
+                    Text(text = text)
                     TextButton(onClick = viewModel::dismissNotice) { Text(text = stringResource(R.string.action_ok)) }
                 }
             }

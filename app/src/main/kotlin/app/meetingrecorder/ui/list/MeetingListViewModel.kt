@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import app.meetingrecorder.AppPreferences
+import app.meetingrecorder.MeetingRecorderApp
 import app.meetingrecorder.storage.MeetingEntry
 import app.meetingrecorder.storage.MeetingRepository
 import app.meetingrecorder.storage.SafMeetingStorage
@@ -25,6 +26,13 @@ class MeetingListViewModel(application: Application) : AndroidViewModel(applicat
     private val preferences = AppPreferences(application)
     private val _state = MutableStateFlow(MeetingListUiState())
     val state: StateFlow<MeetingListUiState> = _state.asStateFlow()
+
+    init {
+        // A recovery run at app start can change statuses and durations: reload when it finishes.
+        viewModelScope.launch {
+            (application as MeetingRecorderApp).recoveryRuns.collect { refresh() }
+        }
+    }
 
     /** Reloads the list from the storage folder (also picks up folders added from outside the app). */
     fun refresh() {

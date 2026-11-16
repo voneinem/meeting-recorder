@@ -6,12 +6,14 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import app.meetingrecorder.core.level.ChannelLevel
 import app.meetingrecorder.core.level.LevelMeter
 import app.meetingrecorder.core.model.MeetingEditor
 import app.meetingrecorder.core.model.SourceInfo
 import app.meetingrecorder.core.model.SourceType
+import app.meetingrecorder.core.wav.RecordingLimits
 import app.meetingrecorder.recording.RecordingStateMachine.Result
 import app.meetingrecorder.storage.SafMeetingStorage
 import java.io.IOException
@@ -40,6 +42,13 @@ class RecordingSession(
     private var open: MeetingFileWriter.OpenMeeting? = null
     private var writer: WavWriter? = null
     private var capture: AudioCapture? = null
+    private val monitor = SuspensionMonitor(context) { suspendBecauseOf(REASON_MICROPHONE_TAKEN) }
+
+    // Per-recording flags and timers, only touched on the capture thread or under [lifecycle] at start.
+    private var lastStorageCheckMs = 0L
+    private var lowStorageWarned = false
+    private var limitWarned = false
+    private var limitStopping = false
 
     @Volatile
     private var state = RecordingState()
@@ -55,6 +64,17 @@ class RecordingSession(
             val fileWriter = MeetingFileWriter(storage)
             val meeting = fileWriter.create(title, OffsetDateTime.now(), SAMPLE_RATE, BUILT_IN_SOURCE)
             val channels = meeting.meeting.audio.channels
+            val freeBytes = runCatching { meeting.audioStore.freeBytes() }.getOrNull()
+            if (freeBytes != null && freeBytes < MIN_START_BYTES) {
+                fileWriter.discard(meeting)
+                resetToIdle()
+                emit(RecordingEvent.Error("storage_too_small"))
+                return@synchronized false
+            }
+            lastStorageCheckMs = SystemClock.elapsedRealtime()
+            lowStorageWarned = false
+            limitWarned = false
+            limitStopping = false
             val wavWriter = try {
                 WavWriter(meeting.audioStore, SAMPLE_RATE, channels, writerListener)
             } catch (e: IOException) {
@@ -82,6 +102,10 @@ class RecordingSession(
                 activeSourceName = BUILT_IN_SOURCE.name,
                 photoCount = 0,
             ) }
+            if (freeBytes != null && freeBytes < LOW_STORAGE_BYTES) {
+                lowStorageWarned = true
+                emit(RecordingEvent.StorageLow(freeBytes))
+            }
             true
         } catch (e: IOException) {
             resetToIdle()
@@ -129,6 +153,7 @@ class RecordingSession(
                 return@synchronized
             }
             update { it.copy(phase = Phase.FINALIZING, levels = silence(it.channels)) }
+            monitor.stop()
             capture?.stop()
             capture = null
             val wavWriter = writer
@@ -181,11 +206,13 @@ class RecordingSession(
             wavWriter.append(buffer, frames)
             val levels = LevelMeter.measure(buffer, frames, state.channels)
             update { it.copy(framesAppended = wavWriter.framesAppended, levels = levels) }
+            checkLimits(wavWriter.framesAppended)
+            checkStorage()
         }
 
         override fun onError(message: String) {
             // Stopping capture joins the capture thread, so it must not happen on that thread.
-            mainHandler.post { suspendBecauseOf(message) }
+            mainHandler.post { suspendBecauseOf(REASON_READ_ERROR) }
         }
     }
 
@@ -202,7 +229,10 @@ class RecordingSession(
         }
 
         override fun onWriteFailed(error: IOException) {
-            emit(RecordingEvent.Error("write_failed", error.message))
+            val full = error.message.orEmpty().let { it.contains("ENOSPC") || it.contains("No space left") }
+            emit(if (full) RecordingEvent.StorageFull else RecordingEvent.Error("write_failed", error.message))
+            // Keep what was recorded: finalize the meeting. Stopping joins the writer thread, so post it.
+            mainHandler.post { stopIfActive() }
         }
     }
 
@@ -212,9 +242,11 @@ class RecordingSession(
         val newCapture = AudioCapture(SAMPLE_RATE, channels, captureListener)
         newCapture.start()
         capture = newCapture
+        monitor.start(newCapture.audioSessionId)
     }
 
     private fun stopCaptureAndSync() {
+        monitor.stop()
         capture?.stop()
         capture = null
         writer?.flush()
@@ -226,6 +258,39 @@ class RecordingSession(
             stopCaptureAndSync()
             update { it.copy(phase = Phase.SUSPENDED, levels = silence(it.channels)) }
             emit(RecordingEvent.Suspended(reason))
+        }
+    }
+
+    /** Stops the recording when one is active; used by the automatic stops (storage full, size limit). */
+    private fun stopIfActive() {
+        synchronized(lifecycle) {
+            if (machine.phase != Phase.IDLE && machine.phase != Phase.FINALIZING) stop()
+        }
+    }
+
+    /** Warns 15 minutes before the WAV size limit and stops cleanly when it is reached (FR-034). */
+    private fun checkLimits(framesAppended: Long) {
+        val channels = state.channels
+        if (!limitWarned && RecordingLimits.isWarningDue(framesAppended, SAMPLE_RATE, channels)) {
+            limitWarned = true
+            emit(RecordingEvent.LimitApproaching(RecordingLimits.remainingSeconds(framesAppended, SAMPLE_RATE, channels)))
+        }
+        if (!limitStopping && RecordingLimits.isLimitReached(framesAppended, channels)) {
+            limitStopping = true
+            emit(RecordingEvent.LimitReached)
+            mainHandler.post { stopIfActive() }
+        }
+    }
+
+    /** Checks the free storage every few seconds and warns once when it gets low. */
+    private fun checkStorage() {
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastStorageCheckMs < STORAGE_CHECK_INTERVAL_MS) return
+        lastStorageCheckMs = now
+        val free = runCatching { open?.audioStore?.freeBytes() }.getOrNull() ?: return
+        if (free < LOW_STORAGE_BYTES && !lowStorageWarned) {
+            lowStorageWarned = true
+            emit(RecordingEvent.StorageLow(free))
         }
     }
 
@@ -265,6 +330,14 @@ class RecordingSession(
 
     companion object {
         const val SAMPLE_RATE = 48_000
+
+        /** Reasons of a [RecordingEvent.Suspended]; the UI maps them to messages. */
+        const val REASON_MICROPHONE_TAKEN = "microphone_taken"
+        const val REASON_READ_ERROR = "read_error"
+
+        private const val MIN_START_BYTES = 10L * 1024 * 1024
+        private const val LOW_STORAGE_BYTES = 100L * 1024 * 1024
+        private const val STORAGE_CHECK_INTERVAL_MS = 10_000L
 
         /** Until the source list exists (user story 2) every meeting starts on the built-in microphone. */
         val BUILT_IN_SOURCE = SourceInfo("Built-in microphone", SourceType.BUILTIN, deliveredChannels = 1)
