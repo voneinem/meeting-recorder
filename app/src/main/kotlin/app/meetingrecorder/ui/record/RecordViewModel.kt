@@ -9,6 +9,10 @@ import androidx.lifecycle.viewModelScope
 import app.meetingrecorder.AppPreferences
 import app.meetingrecorder.MeetingRecorderApp
 import app.meetingrecorder.R
+import app.meetingrecorder.camera.CameraController
+import app.meetingrecorder.camera.PhotoResult
+import app.meetingrecorder.camera.PhotoSaver
+import app.meetingrecorder.camera.PhotoTaker
 import app.meetingrecorder.recording.RecordingController
 import app.meetingrecorder.recording.RecordingEvent
 import app.meetingrecorder.recording.RecordingSession
@@ -31,6 +35,15 @@ class RecordViewModel(application: Application) : AndroidViewModel(application) 
     private val guard = StorageGuard(application, AppPreferences(application))
 
     val state: StateFlow<RecordingState> = controller.state
+
+    /** The camera bound to the record screen; photos are taken through it. */
+    val camera = CameraController(application)
+    private val photoTaker = PhotoTaker(PhotoSaver(application, controller), camera)
+
+    private val _photoBusy = MutableStateFlow(false)
+
+    /** True while a photo is being captured and saved; one photo at a time keeps positions in order. */
+    val photoBusy: StateFlow<Boolean> = _photoBusy.asStateFlow()
 
     private val _title = MutableStateFlow("")
     val title: StateFlow<String> = _title.asStateFlow()
@@ -83,6 +96,19 @@ class RecordViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    /** Takes a photo at the current point of the recording; a failure never interrupts the recording. */
+    fun takePhoto() {
+        if (_photoBusy.value) return
+        _photoBusy.value = true
+        viewModelScope.launch {
+            try {
+                if (photoTaker.take() is PhotoResult.Failed) _notice.value = Notice.Text(R.string.photo_failed)
+            } finally {
+                _photoBusy.value = false
+            }
+        }
+    }
+
     fun pause() {
         viewModelScope.launch { controller.pause() }
     }
@@ -95,6 +121,10 @@ class RecordViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch { controller.stop() }
     }
 
+    override fun onCleared() {
+        camera.unbind()
+    }
+
     private companion object {
         const val SECONDS_PER_MINUTE = 60L
     }
@@ -105,6 +135,7 @@ class RecordViewModel(application: Application) : AndroidViewModel(application) 
             "start_failed" -> Notice.Text(R.string.record_error_start_failed, listOf(detail.orEmpty()))
             "nothing_recorded" -> Notice.Text(R.string.record_error_nothing_recorded)
             "storage_too_small" -> Notice.Text(R.string.record_error_storage_too_small)
+            "photo_file_failed" -> Notice.Text(R.string.photo_failed)
             else -> Notice.Text(R.string.record_error_generic, listOf(code))
         }
         is RecordingEvent.AudioDropped -> Notice.Text(R.string.record_notice_dropped)

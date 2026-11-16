@@ -21,4 +21,11 @@ interface IRecordingService {
     /** Returns the timeline position (frames appended) at the time of the call, or -1 when idle. */
     long markPhotoPosition();
     void addPhoto(String file, long atFrame);
+
+    /**
+     * Creates the next empty photos/photo-NNN.jpg of the current meeting and returns its document
+     * URI, or null when no meeting is active or the file cannot be created. The UI process writes
+     * the JPEG into it and then calls addPhoto() with the file name.
+     */
+    String createPhotoFile();
 }

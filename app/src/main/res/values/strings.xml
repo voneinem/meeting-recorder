@@ -77,4 +77,12 @@
     <string name="record_error_storage_too_small">There is not enough free storage to start a recording.</string>
     <string name="record_notice_suspended_taken">The microphone was taken by another app or a call. Your recording is paused; tap Resume to continue.</string>
     <string name="record_notice_suspended_read_error">Reading from the microphone failed. Your recording is paused; tap Resume to continue.</string>
+    <!-- User story 4: photos -->
+    <string name="photo_button">Take photo</string>
+    <string name="photo_button_count">Take photo (%1$d)</string>
+    <string name="photo_preview_description">Camera preview</string>
+    <string name="photo_camera_reason">Camera: needed to take photos of a whiteboard or slides during the meeting. Each photo is placed at the current point of the recording. Recording works without it.</string>
+    <string name="photo_camera_allow">Allow camera</string>
+    <string name="photo_camera_denied">Without camera access no photos can be taken. Recording is not affected.</string>
+    <string name="photo_failed">The photo could not be saved. The recording continues.</string>
 </resources>

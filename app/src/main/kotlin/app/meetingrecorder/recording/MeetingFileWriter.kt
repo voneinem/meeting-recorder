@@ -59,6 +59,15 @@ class MeetingFileWriter(private val storage: SafMeetingStorage) {
         }
     }
 
+    /**
+     * Creates the next `photos/photo-NNN.jpg`. The number follows the photos already listed in the
+     * metadata, so it matches the entry that [MeetingEditor.addPhoto] appends next.
+     */
+    fun createPhotoFile(open: OpenMeeting): Uri? {
+        val number = MeetingFolderLayout.nextPhotoNumber(open.meeting.photos.map { it.file.substringAfterLast('/') })
+        return storage.createFile(open.photosUri, MeetingFolderLayout.photoFileName(number), SafMeetingStorage.MIME_JPEG)
+    }
+
     /** Rewrites `meeting.json` in one truncating write. */
     fun writeMetadata(open: OpenMeeting) {
         storage.writeText(open.metadataUri, MeetingJson.encode(open.meeting))

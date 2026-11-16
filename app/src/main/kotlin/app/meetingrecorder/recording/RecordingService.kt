@@ -129,6 +129,8 @@ class RecordingService : Service() {
         override fun markPhotoPosition(): Long = session.markPhotoPosition()
 
         override fun addPhoto(file: String, atFrame: Long) = session.addPhoto(atFrame)
+
+        override fun createPhotoFile(): String? = session.createPhotoFile()?.toString()
     }
 
     companion object {

@@ -111,6 +111,15 @@ class RecordingController(context: Context) {
 
     suspend fun addPhoto(file: String, atFrame: Long) = call { it.addPhoto(file, atFrame) }
 
+    /** Creates the next empty photo file in the current meeting and returns its document URI. */
+    suspend fun createPhotoFile(): Uri? = withContext(Dispatchers.IO) {
+        try {
+            service?.createPhotoFile()?.let(Uri::parse)
+        } catch (_: RemoteException) {
+            null
+        }
+    }
+
     private suspend fun call(command: (IRecordingService) -> Unit) {
         val bound = service ?: return
         withContext(Dispatchers.IO) {

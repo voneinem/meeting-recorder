@@ -183,6 +183,20 @@ class RecordingSession(
     /** The timeline position at this moment, or -1 when no meeting is active. */
     fun markPhotoPosition(): Long = writer?.framesAppended ?: -1
 
+    /** Creates the next empty photo file and returns its URI; null when no meeting is active. */
+    fun createPhotoFile(): Uri? {
+        val meeting = open ?: return null
+        val fileWriter = files ?: return null
+        return synchronized(metadata) {
+            try {
+                fileWriter.createPhotoFile(meeting)
+            } catch (e: IOException) {
+                emit(RecordingEvent.Error("photo_file_failed", e.message))
+                null
+            }
+        }
+    }
+
     fun addPhoto(atFrame: Long) {
         val meeting = open ?: return
         val fileWriter = files ?: return

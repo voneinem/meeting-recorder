@@ -31,6 +31,41 @@ object RecordPermissions {
         ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 }
 
+/** The camera permission is optional: only photos need it (Principle VI, FR-031). */
+object CameraPermission {
+    fun granted(context: Context): Boolean =
+        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+}
+
+/**
+ * Explains why the camera is needed before the system dialog is shown. After a denial it says that
+ * only photos are affected and offers to retry or to open the app settings.
+ */
+@Composable
+fun CameraPermissionCard(
+    denied: Boolean,
+    onAllow: () -> Unit,
+    onOpenSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(text = stringResource(R.string.photo_camera_reason))
+        if (denied) {
+            Text(text = stringResource(R.string.photo_camera_denied), color = MaterialTheme.colorScheme.error)
+            OutlinedButton(onClick = onAllow, modifier = Modifier.fillMaxWidth()) {
+                Text(text = stringResource(R.string.permission_retry))
+            }
+            OutlinedButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {
+                Text(text = stringResource(R.string.permission_open_settings))
+            }
+        } else {
+            OutlinedButton(onClick = onAllow, modifier = Modifier.fillMaxWidth()) {
+                Text(text = stringResource(R.string.photo_camera_allow))
+            }
+        }
+    }
+}
+
 /**
  * Explains why each permission is needed before the system dialog is shown (FR-031). When the
  * microphone was denied it says so and offers to retry or to open the app settings.

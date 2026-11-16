@@ -6,6 +6,9 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,7 +31,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.camera.view.PreviewView
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -40,6 +47,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.meetingrecorder.R
 import app.meetingrecorder.core.time.Timeline
+import app.meetingrecorder.camera.CameraController
+import app.meetingrecorder.permissions.CameraPermission
+import app.meetingrecorder.permissions.CameraPermissionCard
 import app.meetingrecorder.permissions.PermissionRationale
 import app.meetingrecorder.permissions.RecordPermissions
 import app.meetingrecorder.recording.Phase
@@ -62,10 +72,18 @@ fun RecordScreen(
     val notice by viewModel.notice.collectAsStateWithLifecycle()
     val starting by viewModel.starting.collectAsStateWithLifecycle()
     val storageProblem by viewModel.storageProblem.collectAsStateWithLifecycle()
+    val photoBusy by viewModel.photoBusy.collectAsStateWithLifecycle()
 
     var showRationale by remember { mutableStateOf(false) }
     var microphoneDenied by remember { mutableStateOf(false) }
     var previousPhase by remember { mutableStateOf(state.phase) }
+    var cameraGranted by remember { mutableStateOf(CameraPermission.granted(context)) }
+    var cameraDenied by remember { mutableStateOf(false) }
+
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        cameraGranted = granted
+        cameraDenied = !granted
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         if (RecordPermissions.microphoneGranted(context)) {
@@ -136,6 +154,18 @@ fun RecordScreen(
                 phase = state.phase,
                 elapsedMs = state.elapsedMs,
                 levels = state.levels,
+                photoCount = state.photoCount,
+                photoBusy = photoBusy,
+                camera = viewModel.camera,
+                cameraGranted = cameraGranted,
+                cameraDenied = cameraDenied,
+                onAllowCamera = { cameraLauncher.launch(android.Manifest.permission.CAMERA) },
+                onOpenSettings = {
+                    context.startActivity(
+                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)),
+                    )
+                },
+                onTakePhoto = viewModel::takePhoto,
                 onPause = viewModel::pause,
                 onResume = viewModel::resume,
                 onStop = viewModel::stop,
@@ -173,6 +203,14 @@ private fun ActiveContent(
     phase: Phase,
     elapsedMs: Long,
     levels: List<app.meetingrecorder.core.level.ChannelLevel>,
+    photoCount: Int,
+    photoBusy: Boolean,
+    camera: CameraController,
+    cameraGranted: Boolean,
+    cameraDenied: Boolean,
+    onAllowCamera: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onTakePhoto: () -> Unit,
     onPause: () -> Unit,
     onResume: () -> Unit,
     onStop: () -> Unit,
@@ -202,6 +240,16 @@ private fun ActiveContent(
         LevelMeterBar(level = level, description = description)
     }
     val controlsEnabled = phase != Phase.FINALIZING
+    if (cameraGranted) {
+        CameraPreview(camera)
+        Button(onClick = onTakePhoto, enabled = controlsEnabled && !photoBusy, modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = if (photoCount > 0) stringResource(R.string.photo_button_count, photoCount) else stringResource(R.string.photo_button),
+            )
+        }
+    } else {
+        CameraPermissionCard(denied = cameraDenied, onAllow = onAllowCamera, onOpenSettings = onOpenSettings)
+    }
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -221,3 +269,35 @@ private fun ActiveContent(
         }
     }
 }
+
+/**
+ * The live camera view, in the portrait shape of the photo so the framing shown is the framing saved.
+ * The camera is released when this leaves the composition or the screen stops.
+ */
+@Composable
+private fun CameraPreview(camera: CameraController) {
+    val owner = LocalLifecycleOwner.current
+    val description = stringResource(R.string.photo_preview_description)
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        AndroidView(
+            factory = { context ->
+                // COMPATIBLE renders into a texture view, so the preview scrolls, clips and layers like
+                // other content instead of drawing on top of the timer.
+                PreviewView(context).also {
+                    it.implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+                    it.scaleType = PreviewView.ScaleType.FIT_CENTER
+                    camera.bind(owner, it)
+                }
+            },
+            onRelease = { camera.unbind() },
+            modifier = Modifier
+                .height(PREVIEW_HEIGHT)
+                .aspectRatio(PREVIEW_ASPECT_RATIO)
+                .clipToBounds()
+                .semantics { contentDescription = description },
+        )
+    }
+}
+
+private val PREVIEW_HEIGHT = 300.dp
+private const val PREVIEW_ASPECT_RATIO = 3f / 4f

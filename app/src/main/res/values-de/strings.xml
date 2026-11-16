@@ -77,4 +77,12 @@
     <string name="record_error_storage_too_small">Es ist nicht genug freier Speicher vorhanden, um eine Aufnahme zu starten.</string>
     <string name="record_notice_suspended_taken">Das Mikrofon wurde von einer anderen App oder einem Anruf belegt. Deine Aufnahme ist pausiert; tippe auf Fortsetzen.</string>
     <string name="record_notice_suspended_read_error">Das Lesen vom Mikrofon ist fehlgeschlagen. Deine Aufnahme ist pausiert; tippe auf Fortsetzen.</string>
+    <!-- Nutzergeschichte 4: Fotos -->
+    <string name="photo_button">Foto aufnehmen</string>
+    <string name="photo_button_count">Foto aufnehmen (%1$d)</string>
+    <string name="photo_preview_description">Kameravorschau</string>
+    <string name="photo_camera_reason">Kamera: wird gebraucht, um während der Besprechung Fotos von Whiteboard oder Folien zu machen. Jedes Foto wird an die aktuelle Stelle der Aufnahme gesetzt. Die Aufnahme funktioniert auch ohne.</string>
+    <string name="photo_camera_allow">Kamera erlauben</string>
+    <string name="photo_camera_denied">Ohne Kamerazugriff können keine Fotos aufgenommen werden. Die Aufnahme ist davon nicht betroffen.</string>
+    <string name="photo_failed">Das Foto konnte nicht gespeichert werden. Die Aufnahme läuft weiter.</string>
 </resources>
