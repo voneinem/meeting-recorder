@@ -13,14 +13,20 @@ import app.meetingrecorder.camera.CameraController
 import app.meetingrecorder.camera.PhotoResult
 import app.meetingrecorder.camera.PhotoSaver
 import app.meetingrecorder.camera.PhotoTaker
+import app.meetingrecorder.core.channels.SourceOption
+import app.meetingrecorder.core.channels.SourceSelector
 import app.meetingrecorder.recording.RecordingController
+import app.meetingrecorder.recording.SourceMonitor
 import app.meetingrecorder.recording.RecordingEvent
 import app.meetingrecorder.recording.RecordingSession
 import app.meetingrecorder.recording.RecordingState
 import app.meetingrecorder.storage.StorageGuard
 import app.meetingrecorder.storage.StorageStatus
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
@@ -29,6 +35,13 @@ sealed interface Notice {
     data class Text(@StringRes val message: Int, val args: List<Any> = emptyList()) : Notice
     data class Plural(@PluralsRes val message: Int, val quantity: Int) : Notice
 }
+
+/** What the source picker shows: the choices, the one a new recording would use, and the suggested one. */
+data class SourceUiState(
+    val options: List<SourceOption> = emptyList(),
+    val selected: SourceOption? = null,
+    val suggestedId: Int? = null,
+)
 
 class RecordViewModel(application: Application) : AndroidViewModel(application) {
     private val controller: RecordingController = (application as MeetingRecorderApp).recordingController
@@ -45,6 +58,18 @@ class RecordViewModel(application: Application) : AndroidViewModel(application) 
     /** True while a photo is being captured and saved; one photo at a time keeps positions in order. */
     val photoBusy: StateFlow<Boolean> = _photoBusy.asStateFlow()
 
+    private val sourceMonitor = SourceMonitor(application)
+    private val selectedSourceId = MutableStateFlow<Int?>(null)
+
+    /** The microphones to choose from. The external one is preselected when it is plugged in (FR-006, FR-007). */
+    val sources: StateFlow<SourceUiState> = combine(sourceMonitor.options, selectedSourceId) { options, selectedId ->
+        SourceUiState(
+            options = options,
+            selected = SourceSelector.resolve(selectedId, options),
+            suggestedId = SourceSelector.suggested(options)?.id,
+        )
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, SourceUiState())
+
     private val _title = MutableStateFlow("")
     val title: StateFlow<String> = _title.asStateFlow()
 
@@ -60,8 +85,13 @@ class RecordViewModel(application: Application) : AndroidViewModel(application) 
     val storageProblem: StateFlow<Boolean> = _storageProblem.asStateFlow()
 
     init {
+        sourceMonitor.start()
         controller.attachIfRunning()
         viewModelScope.launch { controller.events.collect { _notice.value = it.toNotice() } }
+    }
+
+    fun selectSource(option: SourceOption) {
+        selectedSourceId.value = option.id
     }
 
     fun onTitleChange(value: String) {
@@ -85,7 +115,7 @@ class RecordViewModel(application: Application) : AndroidViewModel(application) 
                 when (val status = guard.check()) {
                     is StorageStatus.Ok -> {
                         _notice.value = null
-                        val started = controller.start(_title.value.trim().ifEmpty { null }, status.treeUri)
+                        val started = controller.start(_title.value.trim().ifEmpty { null }, status.treeUri, sources.value.selected?.id ?: RecordingController.BUILT_IN_DEVICE_ID)
                         if (started) _title.value = ""
                     }
                     else -> _storageProblem.value = true
@@ -122,6 +152,7 @@ class RecordViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     override fun onCleared() {
+        sourceMonitor.stop()
         camera.unbind()
     }
 
@@ -142,10 +173,13 @@ class RecordViewModel(application: Application) : AndroidViewModel(application) 
         is RecordingEvent.Suspended -> when (reason) {
             RecordingSession.REASON_MICROPHONE_TAKEN -> Notice.Text(R.string.record_notice_suspended_taken)
             RecordingSession.REASON_READ_ERROR -> Notice.Text(R.string.record_notice_suspended_read_error)
+            RecordingSession.REASON_FALLBACK_FAILED -> Notice.Text(R.string.record_notice_suspended_fallback)
             else -> Notice.Text(R.string.record_notice_suspended, listOf(reason))
         }
         is RecordingEvent.StorageLow ->
             Notice.Text(R.string.storage_low, listOf(Formatter.formatShortFileSize(getApplication(), bytesLeft)))
+        is RecordingEvent.SourceSwitched -> Notice.Text(R.string.record_notice_source_switched, listOf(fromName, toName))
+        is RecordingEvent.ExternalAvailableAgain -> Notice.Text(R.string.record_notice_source_available, listOf(name))
         RecordingEvent.StorageFull -> Notice.Text(R.string.storage_full)
         is RecordingEvent.LimitApproaching -> {
             val minutes = ((secondsLeft + SECONDS_PER_MINUTE - 1) / SECONDS_PER_MINUTE).toInt()

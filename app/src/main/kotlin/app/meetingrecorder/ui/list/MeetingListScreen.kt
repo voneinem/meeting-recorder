@@ -2,19 +2,24 @@ package app.meetingrecorder.ui.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,12 +39,15 @@ import java.util.Date
 /** The basic meeting list (FR-026): title, start and duration, newest first. */
 @Composable
 fun MeetingListScreen(
+    onOpenMeeting: (String) -> Unit,
     onNewRecording: () -> Unit,
     onOpenSettings: () -> Unit,
     viewModel: MeetingListViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
+    var renaming by remember { mutableStateOf<MeetingEntry?>(null) }
+    var deleting by remember { mutableStateOf<MeetingEntry?>(null) }
 
     Column(
         modifier = Modifier
@@ -49,11 +57,27 @@ fun MeetingListScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(text = stringResource(R.string.list_title), style = MaterialTheme.typography.headlineMedium)
+        state.message?.let { message ->
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(text = stringResource(message))
+                    TextButton(onClick = viewModel::messageShown) { Text(text = stringResource(R.string.action_ok)) }
+                }
+            }
+        }
         if (!state.loading && state.meetings.isEmpty()) {
             Text(text = stringResource(R.string.list_empty), modifier = Modifier.weight(1f))
         } else {
             LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(state.meetings, key = { it.folderName }) { MeetingRow(it) }
+                items(state.meetings, key = { it.folderName }) { entry ->
+                    MeetingRow(
+                        entry = entry,
+                        editable = entry.folderName != state.activeFolder,
+                        onOpen = { onOpenMeeting(entry.folderName) },
+                        onRename = { renaming = entry },
+                        onDelete = { deleting = entry },
+                    )
+                }
             }
         }
         Button(onClick = onNewRecording, modifier = Modifier.fillMaxWidth()) {
@@ -63,14 +87,82 @@ fun MeetingListScreen(
             Text(text = stringResource(R.string.list_settings))
         }
     }
+
+    renaming?.let { entry ->
+        RenameDialog(
+            current = entry.title,
+            onConfirm = { title ->
+                viewModel.rename(entry, title)
+                renaming = null
+            },
+            onDismiss = { renaming = null },
+        )
+    }
+    deleting?.let { entry ->
+        DeleteDialog(
+            title = entry.title,
+            onConfirm = {
+                viewModel.delete(entry)
+                deleting = null
+            },
+            onDismiss = { deleting = null },
+        )
+    }
 }
 
 @Composable
-private fun MeetingRow(entry: MeetingEntry) {
+private fun RenameDialog(current: String, onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
+    var text by remember { mutableStateOf(current) }
+    val valid = MeetingListViewModel.isValidTitle(text)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(R.string.list_rename_title)) },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                label = { Text(text = stringResource(R.string.list_rename_label)) },
+                singleLine = true,
+                isError = !valid,
+                supportingText = if (valid) null else ({ Text(text = stringResource(R.string.list_rename_error)) }),
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(text) }, enabled = valid) { Text(text = stringResource(R.string.action_rename)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(text = stringResource(R.string.action_cancel)) }
+        },
+    )
+}
+
+@Composable
+private fun DeleteDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(R.string.list_delete_title)) },
+        text = { Text(text = stringResource(R.string.list_delete_message, title)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(text = stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(text = stringResource(R.string.action_cancel)) }
+        },
+    )
+}
+
+@Composable
+private fun MeetingRow(
+    entry: MeetingEntry,
+    editable: Boolean,
+    onOpen: () -> Unit,
+    onRename: () -> Unit,
+    onDelete: () -> Unit,
+) {
     val started = remember(entry.startedAtMs) {
         DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(entry.startedAtMs))
     }
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(text = entry.title, style = MaterialTheme.typography.titleMedium)
             Text(text = started, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.align(Alignment.Start))
@@ -80,6 +172,14 @@ private fun MeetingRow(entry: MeetingEntry) {
             when {
                 !entry.metadataReadable -> Text(text = stringResource(R.string.list_unreadable), color = MaterialTheme.colorScheme.error)
                 entry.status == MeetingStatus.RECOVERED -> Text(text = stringResource(R.string.list_recovered))
+            }
+            if (editable) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (entry.metadataReadable) {
+                        TextButton(onClick = onRename) { Text(text = stringResource(R.string.action_rename)) }
+                    }
+                    TextButton(onClick = onDelete) { Text(text = stringResource(R.string.action_delete)) }
+                }
             }
         }
     }

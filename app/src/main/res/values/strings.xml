@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Meeting Recorder</string>
-
-    <!-- Shared actions: used by the story screens that follow; tools:ignore is removed in the final cleanup task. -->
-    <string name="action_ok" tools:ignore="UnusedResources">OK</string>
-    <string name="action_cancel" tools:ignore="UnusedResources">Cancel</string>
-    <string name="action_delete" tools:ignore="UnusedResources">Delete</string>
-    <string name="action_rename" tools:ignore="UnusedResources">Rename</string>
-    <string name="action_back" tools:ignore="UnusedResources">Back</string>
-    <string name="action_resume" tools:ignore="UnusedResources">Resume</string>
-    <string name="action_stop" tools:ignore="UnusedResources">Stop</string>
+    <!-- Shared actions -->
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_back">Back</string>
+    <string name="action_resume">Resume</string>
+    <string name="action_stop">Stop</string>
 
     <!-- User story 1: setup, consent, permissions, recording, list, settings -->
     <string name="setup_title">Choose a storage folder</string>
@@ -85,4 +84,35 @@
     <string name="photo_camera_allow">Allow camera</string>
     <string name="photo_camera_denied">Without camera access no photos can be taken. Recording is not affected.</string>
     <string name="photo_failed">The photo could not be saved. The recording continues.</string>
+
+    <!-- User story 5: playback, rename, delete -->
+    <string name="playback_play">Play</string>
+    <string name="playback_pause">Pause</string>
+    <string name="playback_position_description">Playback position</string>
+    <string name="playback_position">%1$s / %2$s</string>
+    <string name="playback_photos">Photos</string>
+    <string name="playback_no_photos">This meeting has no photos.</string>
+    <string name="playback_photo_description">Photo taken at %1$s</string>
+    <string name="playback_photo_close">Close photo</string>
+    <string name="playback_not_found">This meeting was not found. It may have been moved or deleted.</string>
+    <string name="playback_failed">The audio of this meeting cannot be played.</string>
+    <string name="list_rename_title">Rename meeting</string>
+    <string name="list_rename_label">Title</string>
+    <string name="list_rename_error">Enter a title of 1 to 200 characters.</string>
+    <string name="list_rename_failed">The meeting could not be renamed.</string>
+    <string name="list_delete_title">Delete meeting?</string>
+    <string name="list_delete_message">“%1$s” with its audio and photos will be deleted permanently. This cannot be undone.</string>
+    <string name="list_delete_failed">The meeting could not be deleted.</string>
+
+    <!-- User stories 2 and 3: sources, stereo, fallback -->
+    <string name="source_title">Microphone</string>
+    <string name="source_suggested">Suggested</string>
+    <string name="source_stereo">Stereo</string>
+    <string name="source_mono">Mono</string>
+    <string name="source_active">Microphone: %1$s (%2$s)</string>
+    <string name="meter_left">Left</string>
+    <string name="meter_right">Right</string>
+    <string name="record_notice_source_switched">The microphone “%1$s” was disconnected. Recording continues with “%2$s”.</string>
+    <string name="record_notice_source_available">“%1$s” is available. It will be used from the next recording.</string>
+    <string name="record_notice_suspended_fallback">The microphone was disconnected and the built-in microphone could not be opened. Your recording is paused; tap Resume to continue.</string>
 </resources>

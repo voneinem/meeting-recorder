@@ -73,6 +73,7 @@ fun RecordScreen(
     val starting by viewModel.starting.collectAsStateWithLifecycle()
     val storageProblem by viewModel.storageProblem.collectAsStateWithLifecycle()
     val photoBusy by viewModel.photoBusy.collectAsStateWithLifecycle()
+    val sources by viewModel.sources.collectAsStateWithLifecycle()
 
     var showRationale by remember { mutableStateOf(false) }
     var microphoneDenied by remember { mutableStateOf(false) }
@@ -140,6 +141,8 @@ fun RecordScreen(
                 )
             } else {
                 IdleContent(
+                    sources = sources,
+                    onSelectSource = viewModel::selectSource,
                     title = title,
                     starting = starting,
                     onTitleChange = viewModel::onTitleChange,
@@ -154,6 +157,7 @@ fun RecordScreen(
                 phase = state.phase,
                 elapsedMs = state.elapsedMs,
                 levels = state.levels,
+                activeSourceName = state.activeSourceName,
                 photoCount = state.photoCount,
                 photoBusy = photoBusy,
                 camera = viewModel.camera,
@@ -176,6 +180,8 @@ fun RecordScreen(
 
 @Composable
 private fun IdleContent(
+    sources: SourceUiState,
+    onSelectSource: (app.meetingrecorder.core.channels.SourceOption) -> Unit,
     title: String,
     starting: Boolean,
     onTitleChange: (String) -> Unit,
@@ -190,6 +196,7 @@ private fun IdleContent(
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
     )
+    SourcePicker(state = sources, onSelect = onSelectSource)
     Button(onClick = onStart, enabled = !starting, modifier = Modifier.fillMaxWidth()) {
         Text(text = stringResource(R.string.record_start))
     }
@@ -203,6 +210,7 @@ private fun ActiveContent(
     phase: Phase,
     elapsedMs: Long,
     levels: List<app.meetingrecorder.core.level.ChannelLevel>,
+    activeSourceName: String,
     photoCount: Int,
     photoBusy: Boolean,
     camera: CameraController,
@@ -231,13 +239,22 @@ private fun ActiveContent(
             .semantics { contentDescription = elapsedDescription },
         textAlign = TextAlign.Center,
     )
+    if (activeSourceName.isNotEmpty()) {
+        Text(
+            text = stringResource(R.string.source_active, activeSourceName, channelLabel(levels.size)),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
+    }
     levels.forEachIndexed { index, level ->
         val description = if (levels.size == 1) {
             stringResource(R.string.level_meter_description_mono)
         } else {
             stringResource(R.string.level_meter_description, index + 1, levels.size)
         }
-        LevelMeterBar(level = level, description = description)
+        val label = if (levels.size == 2) stringResource(if (index == 0) R.string.meter_left else R.string.meter_right) else null
+        LevelMeterBar(level = level, description = description, label = label)
     }
     val controlsEnabled = phase != Phase.FINALIZING
     if (cameraGranted) {

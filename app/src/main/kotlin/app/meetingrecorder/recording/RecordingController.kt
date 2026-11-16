@@ -83,11 +83,11 @@ class RecordingController(context: Context) {
      * Starts the foreground service, connects to it and starts a meeting. Returns false when the
      * recording did not start; the reason arrives as a [RecordingEvent.Error] on [events].
      */
-    suspend fun start(title: String?, treeUri: Uri): Boolean {
+    suspend fun start(title: String?, treeUri: Uri, deviceId: Int = BUILT_IN_DEVICE_ID): Boolean {
         val bound = service ?: connect() ?: return false
         return withContext(Dispatchers.IO) {
             try {
-                bound.start(title.orEmpty(), BUILT_IN_DEVICE_ID, treeUri.toString())
+                bound.start(title.orEmpty(), deviceId, treeUri.toString())
             } catch (_: RemoteException) {
                 false
             }
@@ -143,7 +143,7 @@ class RecordingController(context: Context) {
 
     companion object {
         /** Tells the service to use the built-in microphone. */
-        const val BUILT_IN_DEVICE_ID = -1
+        const val BUILT_IN_DEVICE_ID = RecordingSession.BUILT_IN_DEVICE_ID
         private const val EVENT_BUFFER = 16
         private const val CONNECT_TIMEOUT_MS = 5_000L
     }

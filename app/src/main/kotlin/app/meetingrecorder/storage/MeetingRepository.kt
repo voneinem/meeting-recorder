@@ -2,7 +2,10 @@ package app.meetingrecorder.storage
 
 import android.net.Uri
 import app.meetingrecorder.core.folder.MeetingFolderLayout
+import app.meetingrecorder.core.guide.ClaudeGuide
 import app.meetingrecorder.core.json.MeetingJson
+import app.meetingrecorder.core.model.MeetingEditor
+import app.meetingrecorder.core.model.MeetingMetadata
 import app.meetingrecorder.core.model.MeetingStatus
 import app.meetingrecorder.core.time.Timeline
 import app.meetingrecorder.core.wav.WavHeader
@@ -25,6 +28,16 @@ data class MeetingEntry(
     val metadataReadable: Boolean,
 )
 
+/** Everything the playback screen needs about one meeting. [meeting] is null when the metadata is unreadable. */
+class MeetingDetail(
+    val folderName: String,
+    val title: String,
+    val meeting: MeetingMetadata?,
+    val audioUri: Uri,
+    /** Photo document URIs by their path in `meeting.json` (for example `photos/photo-001.jpg`). */
+    val photoUris: Map<String, Uri>,
+)
+
 /** Lists the meetings found in the storage folder. The folders are the only source of truth. */
 class MeetingRepository(private val storage: SafMeetingStorage) {
 
@@ -34,6 +47,49 @@ class MeetingRepository(private val storage: SafMeetingStorage) {
             .filter { it.isDirectory }
             .mapNotNull(::entryOf)
             .sortedByDescending { it.startedAtMs }
+
+    /** Loads one meeting for playback, or null when the folder or its audio file is gone. */
+    fun detail(folderName: String): MeetingDetail? {
+        val folder = storage.listChildren(storage.rootUri).firstOrNull { it.isDirectory && it.name == folderName } ?: return null
+        val children = storage.listChildren(folder.uri)
+        val audio = children.firstOrNull { it.name == MeetingFolderLayout.AUDIO_FILE } ?: return null
+        val meeting = readMeeting(children)
+        val photos = children.firstOrNull { it.isDirectory && it.name == MeetingFolderLayout.PHOTOS_DIR }
+            ?.let { dir -> storage.listChildren(dir.uri).associate { "${MeetingFolderLayout.PHOTOS_DIR}/${it.name}" to it.uri } }
+            .orEmpty()
+        return MeetingDetail(folderName, meeting?.title ?: folderName, meeting, audio.uri, photos)
+    }
+
+    /**
+     * Changes only the title in `meeting.json` (one truncating write) and regenerates `CLAUDE.md` so it
+     * stays consistent. The folder name never changes (FR-027). Returns false when the metadata cannot
+     * be read, the title is invalid or a write fails.
+     */
+    fun rename(folderName: String, newTitle: String): Boolean = runCatching {
+        val folder = storage.listChildren(storage.rootUri).firstOrNull { it.isDirectory && it.name == folderName }
+            ?: return@runCatching false
+        val children = storage.listChildren(folder.uri)
+        val metadataFile = children.firstOrNull { it.name == MeetingFolderLayout.METADATA_FILE } ?: return@runCatching false
+        val meeting = readMeeting(children) ?: return@runCatching false
+        val renamed = MeetingEditor.rename(meeting, newTitle)
+        storage.writeText(metadataFile.uri, MeetingJson.encode(renamed))
+        val guide = children.firstOrNull { it.name == MeetingFolderLayout.GUIDE_FILE }?.uri
+            ?: storage.createFile(folder.uri, MeetingFolderLayout.GUIDE_FILE, SafMeetingStorage.MIME_MARKDOWN)
+        guide?.let { storage.writeText(it, ClaudeGuide.generate(renamed)) }
+        true
+    }.getOrDefault(false)
+
+    /** Deletes the whole meeting folder. Returns true when it is gone. */
+    fun delete(folderName: String): Boolean {
+        val folder = storage.listChildren(storage.rootUri).firstOrNull { it.isDirectory && it.name == folderName } ?: return true
+        return storage.delete(folder.uri)
+    }
+
+    private fun readMeeting(children: List<DocumentRef>): MeetingMetadata? {
+        val file = children.firstOrNull { it.name == MeetingFolderLayout.METADATA_FILE } ?: return null
+        val decoded = storage.readText(file.uri)?.let(MeetingJson::decode)
+        return (decoded as? MeetingJson.DecodeResult.Success)?.meeting
+    }
 
     private fun entryOf(folder: DocumentRef): MeetingEntry? {
         val children = storage.listChildren(folder.uri)

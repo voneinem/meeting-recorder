@@ -1,6 +1,7 @@
 package app.meetingrecorder.recording
 
 import android.annotation.SuppressLint
+import android.media.AudioDeviceInfo
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
@@ -16,6 +17,8 @@ class AudioCapture(
     private val sampleRate: Int,
     private val channels: Int,
     private val listener: Listener,
+    /** The microphone to record from; null lets the system choose. */
+    private val preferredDevice: AudioDeviceInfo? = null,
 ) {
     interface Listener {
         /** Called on the capture thread; the buffer is reused afterwards, so copy what you keep. */
@@ -33,6 +36,9 @@ class AudioCapture(
 
     /** The audio session of the running capture, used to recognize it in recording callbacks. */
     val audioSessionId: Int get() = record?.audioSessionId ?: 0
+
+    /** The id of the device the system actually routes the capture to, or null while unknown. */
+    val routedDeviceId: Int? get() = record?.routedDevice?.id
 
     @SuppressLint("MissingPermission") // checked by the caller before the session starts
     fun start() {
@@ -57,6 +63,7 @@ class AudioCapture(
             audioRecord.release()
             throw IOException("the microphone could not be opened")
         }
+        preferredDevice?.let { audioRecord.setPreferredDevice(it) }
         audioRecord.startRecording()
         if (audioRecord.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
             audioRecord.release()

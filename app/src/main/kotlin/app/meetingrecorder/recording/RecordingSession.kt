@@ -8,6 +8,9 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import androidx.core.content.ContextCompat
+import app.meetingrecorder.core.channels.ChannelPolicy
+import app.meetingrecorder.core.channels.SourceOption
+import app.meetingrecorder.core.channels.SourceSelector
 import app.meetingrecorder.core.level.ChannelLevel
 import app.meetingrecorder.core.level.LevelMeter
 import app.meetingrecorder.core.model.MeetingEditor
@@ -43,6 +46,20 @@ class RecordingSession(
     private var writer: WavWriter? = null
     private var capture: AudioCapture? = null
     private val monitor = SuspensionMonitor(context) { suspendBecauseOf(REASON_MICROPHONE_TAKEN) }
+    private val sources = SourceMonitor(context)
+
+    /** The microphone the recording currently uses, and its id in the meeting's `sources` list. */
+    @Volatile
+    private var activeSource: SourceOption? = null
+    private var activeMeetingSourceId = 0
+
+    /** Channels delivered by the running capture; fewer than the file's channels means they are duplicated. */
+    @Volatile
+    private var captureChannels = 1
+
+    /** Channels of the audio file; fixed for the whole meeting when it starts (FR-011). */
+    @Volatile
+    private var fileChannels = 1
 
     // Per-recording flags and timers, only touched on the capture thread or under [lifecycle] at start.
     private var lastStorageCheckMs = 0L
@@ -55,14 +72,18 @@ class RecordingSession(
 
     fun currentState(): RecordingState = state
 
-    /** Starts a new meeting in the storage folder [treeUri]. Returns false when nothing was started. */
-    fun start(title: String?, treeUri: Uri): Boolean = synchronized(lifecycle) {
+    /**
+     * Starts a new meeting in the storage folder [treeUri] on the input device [deviceId]
+     * ([BUILT_IN_DEVICE_ID] or an unknown id means the built-in microphone). Returns false when nothing was started.
+     */
+    fun start(title: String?, treeUri: Uri, deviceId: Int = BUILT_IN_DEVICE_ID): Boolean = synchronized(lifecycle) {
         if (!isPermitted()) return@synchronized reject("no_microphone_permission")
         if (machine.apply(Command.START) is Result.Rejected) return@synchronized reject("rejected_start")
         try {
             val storage = SafMeetingStorage(context, treeUri)
             val fileWriter = MeetingFileWriter(storage)
-            val meeting = fileWriter.create(title, OffsetDateTime.now(), SAMPLE_RATE, BUILT_IN_SOURCE)
+            val chosen = chooseSource(deviceId)
+            val meeting = fileWriter.create(title, OffsetDateTime.now(), SAMPLE_RATE, chosen.info)
             val channels = meeting.meeting.audio.channels
             val freeBytes = runCatching { meeting.audioStore.freeBytes() }.getOrNull()
             if (freeBytes != null && freeBytes < MIN_START_BYTES) {
@@ -84,8 +105,11 @@ class RecordingSession(
             files = fileWriter
             open = meeting
             writer = wavWriter
+            activeSource = chosen
+            fileChannels = channels
+            activeMeetingSourceId = meeting.meeting.initialSourceId
             try {
-                startCapture(channels)
+                startCapture(chosen)
             } catch (e: IOException) {
                 wavWriter.close()
                 fileWriter.discard(meeting)
@@ -99,9 +123,10 @@ class RecordingSession(
                 sampleRate = SAMPLE_RATE,
                 channels = channels,
                 levels = List(channels) { ChannelLevel(LevelMeter.FLOOR_DB, LevelMeter.FLOOR_DB) },
-                activeSourceName = BUILT_IN_SOURCE.name,
+                activeSourceName = chosen.info.name,
                 photoCount = 0,
             ) }
+            sources.start(::onSourcesChanged)
             if (freeBytes != null && freeBytes < LOW_STORAGE_BYTES) {
                 lowStorageWarned = true
                 emit(RecordingEvent.StorageLow(freeBytes))
@@ -136,7 +161,7 @@ class RecordingSession(
                 return@synchronized
             }
             try {
-                startCapture(state.channels)
+                resumeOnAvailableSource()
                 update { it.copy(phase = Phase.RECORDING) }
             } catch (e: IOException) {
                 machine.apply(Command.SUSPEND)
@@ -217,8 +242,14 @@ class RecordingSession(
     private val captureListener = object : AudioCapture.Listener {
         override fun onAudio(buffer: ShortArray, frames: Int) {
             val wavWriter = writer ?: return
-            wavWriter.append(buffer, frames)
-            val levels = LevelMeter.measure(buffer, frames, state.channels)
+            // After a fallback from a stereo source the built-in microphone feeds both channels (FR-014).
+            val data = if (ChannelPolicy.needsDuplication(fileChannels, captureChannels)) {
+                ChannelPolicy.duplicateMonoToStereo(buffer, frames)
+            } else {
+                buffer
+            }
+            wavWriter.append(data, frames)
+            val levels = LevelMeter.measure(data, frames, fileChannels)
             update { it.copy(framesAppended = wavWriter.framesAppended, levels = levels) }
             checkLimits(wavWriter.framesAppended)
             checkStorage()
@@ -226,7 +257,7 @@ class RecordingSession(
 
         override fun onError(message: String) {
             // Stopping capture joins the capture thread, so it must not happen on that thread.
-            mainHandler.post { suspendBecauseOf(REASON_READ_ERROR) }
+            mainHandler.post { handleCaptureFailure() }
         }
     }
 
@@ -252,11 +283,97 @@ class RecordingSession(
 
     // --- internals ---
 
-    private fun startCapture(channels: Int) {
-        val newCapture = AudioCapture(SAMPLE_RATE, channels, captureListener)
+    /** The source for a new recording: the requested device, else the built-in microphone. */
+    private fun chooseSource(deviceId: Int): SourceOption {
+        val options = sources.current()
+        return options.firstOrNull { it.id == deviceId && deviceId != BUILT_IN_DEVICE_ID }
+            ?: SourceSelector.builtIn(options)
+            ?: SourceOption(BUILT_IN_DEVICE_ID, BUILT_IN_SOURCE)
+    }
+
+    private fun startCapture(source: SourceOption) {
+        val channels = minOf(source.recordedChannels, fileChannels)
+        val device = sources.deviceFor(source.id)
+        val newCapture = AudioCapture(SAMPLE_RATE, channels, captureListener, device)
         newCapture.start()
+        captureChannels = channels
         capture = newCapture
         monitor.start(newCapture.audioSessionId)
+    }
+
+    /**
+     * Resumes on the source the recording had, or, when that external source is gone, on the built-in
+     * microphone with the switch logged. A re-plugged device is never taken over by itself (FR-015).
+     */
+    private fun resumeOnAvailableSource() {
+        val active = activeSource ?: SourceOption(BUILT_IN_DEVICE_ID, BUILT_IN_SOURCE)
+        val target = SourceSelector.fallbackFor(active.id, sources.current())?.takeIf { active.info.type != SourceType.BUILTIN } ?: active
+        startCapture(target)
+        if (target != active) logSwitch(active, target)
+    }
+
+    /** Called on the main thread when a microphone was plugged in or unplugged while recording. */
+    private fun onSourcesChanged(before: List<SourceOption>, now: List<SourceOption>) {
+        synchronized(lifecycle) {
+            val active = activeSource ?: return
+            if (machine.phase == Phase.IDLE || machine.phase == Phase.FINALIZING) return
+            SourceSelector.newlyAvailableExternal(before, now).forEach { emit(RecordingEvent.ExternalAvailableAgain(it.info.name)) }
+            if (active.info.type == SourceType.BUILTIN) return
+            SourceSelector.fallbackFor(active.id, now)?.let { fallbackTo(active, it) }
+        }
+    }
+
+    /** A read error: when the cause is an unplugged external source, continue on the built-in one; otherwise suspend. */
+    private fun handleCaptureFailure() {
+        synchronized(lifecycle) {
+            if (machine.phase != Phase.RECORDING) return
+            val active = activeSource
+            val fallback = active?.takeIf { it.info.type != SourceType.BUILTIN }
+                ?.let { SourceSelector.fallbackFor(it.id, sources.current()) }
+            if (active != null && fallback != null) fallbackTo(active, fallback) else suspendBecauseOf(REASON_READ_ERROR)
+        }
+    }
+
+    /**
+     * Moves the recording from [from] to [to] without losing audio: capture is re-opened on [to], the
+     * file layout stays as it is and the switch is logged at its timeline position (FR-012, FR-013).
+     * If [to] cannot be opened the recording is suspended with everything so far intact (FR-014).
+     */
+    private fun fallbackTo(from: SourceOption, to: SourceOption) {
+        synchronized(lifecycle) {
+            if (activeSource != from) return
+            if (machine.phase == Phase.RECORDING) {
+                stopCaptureAndSync()
+                try {
+                    startCapture(to)
+                } catch (_: IOException) {
+                    suspendBecauseOf(REASON_FALLBACK_FAILED)
+                    return
+                }
+            }
+            logSwitch(from, to)
+        }
+    }
+
+    /** Records a change of source in the meeting data, publishes the new name and tells the UI. */
+    private fun logSwitch(from: SourceOption, to: SourceOption) {
+        val atFrame = writer?.framesAppended ?: return
+        synchronized(metadata) {
+            val meeting = open ?: return
+            val (withSource, toId) = MeetingEditor.addSource(meeting.meeting, to.info)
+            if (toId != activeMeetingSourceId) {
+                meeting.meeting = MeetingEditor.addSourceSwitch(withSource, atFrame, activeMeetingSourceId, toId)
+                activeMeetingSourceId = toId
+                try {
+                    files?.writeMetadata(meeting)
+                } catch (e: IOException) {
+                    emit(RecordingEvent.Error("metadata_write_failed", e.message))
+                }
+            }
+        }
+        activeSource = to
+        update { it.copy(activeSourceName = to.info.name) }
+        emit(RecordingEvent.SourceSwitched(from.info.name, to.info.name, atFrame))
     }
 
     private fun stopCaptureAndSync() {
@@ -324,6 +441,8 @@ class RecordingSession(
     }
 
     private fun clear() {
+        sources.stop()
+        activeSource = null
         files = null
         open = null
         writer = null
@@ -348,12 +467,16 @@ class RecordingSession(
         /** Reasons of a [RecordingEvent.Suspended]; the UI maps them to messages. */
         const val REASON_MICROPHONE_TAKEN = "microphone_taken"
         const val REASON_READ_ERROR = "read_error"
+        const val REASON_FALLBACK_FAILED = "fallback_failed"
+
+        /** The id the UI sends for "use the built-in microphone". */
+        const val BUILT_IN_DEVICE_ID = -1
 
         private const val MIN_START_BYTES = 10L * 1024 * 1024
         private const val LOW_STORAGE_BYTES = 100L * 1024 * 1024
         private const val STORAGE_CHECK_INTERVAL_MS = 10_000L
 
-        /** Until the source list exists (user story 2) every meeting starts on the built-in microphone. */
-        val BUILT_IN_SOURCE = SourceInfo("Built-in microphone", SourceType.BUILTIN, deliveredChannels = 1)
+        /** Used only when the system lists no built-in microphone at all. */
+        val BUILT_IN_SOURCE = SourceInfo(SourceMapper.BUILT_IN_NAME, SourceType.BUILTIN, deliveredChannels = 1)
     }
 }

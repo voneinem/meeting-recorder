@@ -1,5 +1,6 @@
 package app.meetingrecorder.ui
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -14,6 +15,7 @@ import app.meetingrecorder.AppPreferences
 import app.meetingrecorder.storage.StorageGuard
 import app.meetingrecorder.storage.StorageStatus
 import app.meetingrecorder.ui.list.MeetingListScreen
+import app.meetingrecorder.ui.playback.PlaybackScreen
 import app.meetingrecorder.ui.record.RecordScreen
 import app.meetingrecorder.ui.settings.SettingsScreen
 import app.meetingrecorder.ui.setup.ConsentScreen
@@ -25,6 +27,9 @@ object Routes {
     const val RECORD = "record"
     const val LIST = "list"
     const val SETTINGS = "settings"
+    const val PLAYBACK = "playback/{folder}"
+
+    fun playback(folder: String) = "playback/${Uri.encode(folder)}"
 
     fun setup(lost: Boolean = false, change: Boolean = false) = "setup?lost=$lost&change=$change"
 }
@@ -88,9 +93,16 @@ fun AppNavigation(preferences: AppPreferences) {
         }
         composable(Routes.LIST) {
             MeetingListScreen(
+                onOpenMeeting = { navController.navigate(Routes.playback(it)) },
                 onNewRecording = { navController.goTo(Routes.RECORD) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
             )
+        }
+        composable(
+            route = Routes.PLAYBACK,
+            arguments = listOf(navArgument("folder") { type = NavType.StringType }),
+        ) {
+            PlaybackScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(

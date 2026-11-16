@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Meeting Recorder</string>
-
-    <!-- Shared actions: used by the story screens that follow; tools:ignore is removed in the final cleanup task. -->
-    <string name="action_ok" tools:ignore="UnusedResources">OK</string>
-    <string name="action_cancel" tools:ignore="UnusedResources">Abbrechen</string>
-    <string name="action_delete" tools:ignore="UnusedResources">Löschen</string>
-    <string name="action_rename" tools:ignore="UnusedResources">Umbenennen</string>
-    <string name="action_back" tools:ignore="UnusedResources">Zurück</string>
-    <string name="action_resume" tools:ignore="UnusedResources">Fortsetzen</string>
-    <string name="action_stop" tools:ignore="UnusedResources">Stopp</string>
+    <!-- Shared actions -->
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Abbrechen</string>
+    <string name="action_delete">Löschen</string>
+    <string name="action_rename">Umbenennen</string>
+    <string name="action_back">Zurück</string>
+    <string name="action_resume">Fortsetzen</string>
+    <string name="action_stop">Stopp</string>
 
     <!-- User story 1: setup, consent, permissions, recording, list, settings -->
     <string name="setup_title">Speicherordner wählen</string>
@@ -85,4 +84,35 @@
     <string name="photo_camera_allow">Kamera erlauben</string>
     <string name="photo_camera_denied">Ohne Kamerazugriff können keine Fotos aufgenommen werden. Die Aufnahme ist davon nicht betroffen.</string>
     <string name="photo_failed">Das Foto konnte nicht gespeichert werden. Die Aufnahme läuft weiter.</string>
+
+    <!-- Nutzergeschichte 5: Wiedergabe, Umbenennen, Löschen -->
+    <string name="playback_play">Wiedergabe</string>
+    <string name="playback_pause">Pause</string>
+    <string name="playback_position_description">Wiedergabeposition</string>
+    <string name="playback_position">%1$s / %2$s</string>
+    <string name="playback_photos">Fotos</string>
+    <string name="playback_no_photos">Diese Besprechung enthält keine Fotos.</string>
+    <string name="playback_photo_description">Foto von %1$s</string>
+    <string name="playback_photo_close">Foto schließen</string>
+    <string name="playback_not_found">Diese Besprechung wurde nicht gefunden. Sie wurde vielleicht verschoben oder gelöscht.</string>
+    <string name="playback_failed">Das Audio dieser Besprechung kann nicht abgespielt werden.</string>
+    <string name="list_rename_title">Besprechung umbenennen</string>
+    <string name="list_rename_label">Titel</string>
+    <string name="list_rename_error">Gib einen Titel mit 1 bis 200 Zeichen ein.</string>
+    <string name="list_rename_failed">Die Besprechung konnte nicht umbenannt werden.</string>
+    <string name="list_delete_title">Besprechung löschen?</string>
+    <string name="list_delete_message">„%1$s“ wird mit Audio und Fotos endgültig gelöscht. Das kann nicht rückgängig gemacht werden.</string>
+    <string name="list_delete_failed">Die Besprechung konnte nicht gelöscht werden.</string>
+
+    <!-- Nutzergeschichten 2 und 3: Quellen, Stereo, Ausweichen -->
+    <string name="source_title">Mikrofon</string>
+    <string name="source_suggested">Empfohlen</string>
+    <string name="source_stereo">Stereo</string>
+    <string name="source_mono">Mono</string>
+    <string name="source_active">Mikrofon: %1$s (%2$s)</string>
+    <string name="meter_left">Links</string>
+    <string name="meter_right">Rechts</string>
+    <string name="record_notice_source_switched">Das Mikrofon „%1$s“ wurde getrennt. Die Aufnahme läuft mit „%2$s“ weiter.</string>
+    <string name="record_notice_source_available">„%1$s“ ist verfügbar. Es wird ab der nächsten Aufnahme verwendet.</string>
+    <string name="record_notice_suspended_fallback">Das Mikrofon wurde getrennt und das eingebaute Mikrofon konnte nicht geöffnet werden. Deine Aufnahme ist pausiert; tippe auf Fortsetzen.</string>
 </resources>

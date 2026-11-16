@@ -28,6 +28,7 @@ class RecordingService : Service() {
 
     @Volatile
     private var lastPhase = Phase.IDLE
+    private var lastSourceName = ""
 
     override fun onCreate() {
         super.onCreate()
@@ -65,6 +66,11 @@ class RecordingService : Service() {
     private fun broadcastState(state: RecordingState) {
         val parcel = state.toParcel()
         forEachCallback { it.onState(parcel) }
+        if (state.phase != Phase.IDLE && state.phase == lastPhase && state.activeSourceName != lastSourceName) {
+            // The microphone changed during a fallback: the notification names the one in use.
+            notification.update(state)
+        }
+        lastSourceName = state.activeSourceName
         if (state.phase != lastPhase) {
             val previous = lastPhase
             lastPhase = state.phase
@@ -112,7 +118,7 @@ class RecordingService : Service() {
         override fun getState(): RecordingStateParcel = session.currentState().toParcel()
 
         override fun start(title: String?, deviceId: Int, storageTreeUri: String): Boolean {
-            val started = session.start(title?.takeIf { it.isNotBlank() }, storageTreeUri.toUri())
+            val started = session.start(title?.takeIf { it.isNotBlank() }, storageTreeUri.toUri(), deviceId)
             if (!started) {
                 ServiceCompat.stopForeground(this@RecordingService, ServiceCompat.STOP_FOREGROUND_REMOVE)
                 stopSelf()
