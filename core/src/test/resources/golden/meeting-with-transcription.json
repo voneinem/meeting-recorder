@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "title": "2026-11-15 09:05",
+  "startedAt": "2026-11-15T09:05:12+01:00",
+  "status": "complete",
+  "audio": {
+    "file": "audio.wav",
+    "format": "pcm_s16le",
+    "sampleRate": 48000,
+    "channels": 1,
+    "channelLayout": "mono",
+    "durationFrames": 2880000,
+    "durationMs": 60000
+  },
+  "sources": [
+    {
+      "id": 0,
+      "name": "Built-in microphone",
+      "type": "builtin",
+      "deliveredChannels": 1,
+      "channels": 1
+    }
+  ],
+  "initialSourceId": 0,
+  "sourceSwitches": [],
+  "photos": [],
+  "dropouts": [],
+  "transcription": {
+    "transcript": {
+      "modelId": "small-q5_1",
+      "modelName": "Small (q5_1)",
+      "requestedLanguage": "auto",
+      "language": "de",
+      "completedAt": "2026-11-16T22:31:08+01:00",
+      "processingMs": 14200,
+      "segmentCount": 4
+    },
+    "job": {
+      "state": "failed",
+      "modelId": "medium-q5_0",
+      "requestedLanguage": "de",
+      "startedAt": "2026-11-16T22:40:00+01:00",
+      "failureReason": "recording-started",
+      "failureMessage": "stopped because a recording was started",
+      "resumable": true
+    }
+  }
+}

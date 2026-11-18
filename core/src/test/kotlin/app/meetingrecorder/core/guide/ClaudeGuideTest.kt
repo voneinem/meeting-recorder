@@ -35,7 +35,50 @@ class ClaudeGuideTest {
             "## Format reference",
         ).forEach { assertTrue(it in guide, "missing: $it") }
         assertTrue("48000 Hz" in guide)
-        assertTrue("Transcription is not part of this folder yet" in guide)
+        assertTrue("No transcript has been created for this meeting yet." in guide)
+        assertFalse("Transcription is not part of this folder yet" in guide)
+    }
+
+    @Test
+    fun `a meeting with a transcript gets the transcript section and matches the golden file`() {
+        assertEquals(
+            TestMeetings.resource("/golden/claude-guide-mono-transcript.md"),
+            ClaudeGuide.generate(TestMeetings.monoTranscribed),
+        )
+    }
+
+    @Test
+    fun `the transcript section lists its five items in the contract order`() {
+        val guide = ClaudeGuide.generate(TestMeetings.monoTranscribed)
+        val order = listOf(
+            "1. **Files**", "2. **Fields of `transcript.json`**", "3. **Photos in the text**",
+            "4. **The `transcription` block of `meeting.json`**", "5. **Suggested follow-up tasks**",
+        ).map { guide.indexOf(it) }
+        assertTrue(order.all { it >= 0 }, "missing item: $order")
+        assertEquals(order.sorted(), order)
+        assertFalse("No transcript has been created" in guide)
+        assertTrue("`speaker` (always `null` for now)" in guide)
+        assertTrue("names and numbers may be wrong" in guide)
+    }
+
+    @Test
+    fun `only a committed transcript counts, a job alone does not`() {
+        val jobOnly = TestMeetings.monoTranscribed.copy(
+            transcription = TestMeetings.monoTranscribed.transcription!!.copy(transcript = null),
+        )
+        val guide = ClaudeGuide.generate(jobOnly)
+        assertTrue("No transcript has been created for this meeting yet." in guide)
+        assertFalse("## Transcript" in guide)
+        assertEquals(ClaudeGuide.generate(TestMeetings.mono), guide)
+    }
+
+    @Test
+    fun `the transcript section is English whatever the model name is`() {
+        val block = TestMeetings.monoTranscribed.transcription!!
+        val german = TestMeetings.monoTranscribed.copy(
+            transcription = block.copy(transcript = block.transcript!!.copy(modelName = "Klein (q5_1)")),
+        )
+        assertTrue("\"Klein (q5_1)\"" in ClaudeGuide.generate(german))
     }
 
     @Test

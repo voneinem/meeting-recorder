@@ -57,4 +57,30 @@ class MeetingFolderLayoutTest {
         assertFalse(MeetingFolderLayout.isMeetingFolder(listOf("notes.txt", "photos")))
         assertFalse(MeetingFolderLayout.isMeetingFolder(emptyList()))
     }
+
+    @Test
+    fun `transcript file names and the staging suffix match the transcript contract`() {
+        assertEquals("transcript.json", MeetingFolderLayout.TRANSCRIPT_JSON_FILE)
+        assertEquals("transcript.md", MeetingFolderLayout.TRANSCRIPT_MD_FILE)
+        assertEquals("transcript.work.jsonl", MeetingFolderLayout.TRANSCRIPT_WORK_FILE)
+        assertEquals(".part", MeetingFolderLayout.PART_SUFFIX)
+        assertEquals("transcript.json.part", MeetingFolderLayout.partName("transcript.json"))
+    }
+
+    @Test
+    fun `staging files are recognised by name`() {
+        assertTrue(MeetingFolderLayout.isStagingFile("transcript.json.part"))
+        assertTrue(MeetingFolderLayout.isStagingFile("transcript.md.part"))
+        assertTrue(MeetingFolderLayout.isStagingFile("meeting.json.part"))
+        assertFalse(MeetingFolderLayout.isStagingFile("transcript.json"))
+        assertFalse(MeetingFolderLayout.isStagingFile("transcript.work.jsonl"))
+        assertFalse(MeetingFolderLayout.isStagingFile("audio.wav.part"))
+    }
+
+    @Test
+    fun `staging and work files alone do not make a meeting folder`() {
+        assertFalse(MeetingFolderLayout.isMeetingFolder(listOf("transcript.json", "transcript.json.part")))
+        assertTrue(MeetingFolderLayout.isMeetingFolder(listOf("transcript.json", "meeting.json")))
+        assertTrue(MeetingFolderLayout.isMeetingFolder(listOf("audio.wav", "transcript.work.jsonl")))
+    }
 }

@@ -3,11 +3,15 @@ package app.meetingrecorder.core.json
 import app.meetingrecorder.core.TestMeetings
 import app.meetingrecorder.core.json.MeetingJson.DecodeResult
 import app.meetingrecorder.core.model.ChannelLayout
+import app.meetingrecorder.core.model.FailureReason
+import app.meetingrecorder.core.model.JobState
+import app.meetingrecorder.core.model.MeetingTranscription
 import app.meetingrecorder.core.model.MeetingMetadata
 import app.meetingrecorder.core.model.Photo
 import app.meetingrecorder.core.model.Dropout
 import app.meetingrecorder.core.model.SourceSwitch
 import app.meetingrecorder.core.model.SwitchReason
+import app.meetingrecorder.core.model.TranscriptInfo
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -168,5 +172,81 @@ class MeetingJsonTest {
         assertTrue("title" in rules(TestMeetings.mono.copy(title = "x".repeat(MeetingMetadata.MAX_TITLE_LENGTH + 1))))
         assertTrue("startedAt" in rules(TestMeetings.mono.copy(startedAt = "yesterday")))
         assertTrue("schemaVersion" in rules(TestMeetings.mono.copy(schemaVersion = 3)))
+    }
+
+    // --- Phase 2: the optional "transcription" block ---
+
+    private val transcribedPath = "/golden/meeting-with-transcription.json"
+
+    @Test
+    fun `a missing transcription block is not written and decodes to null`() {
+        assertTrue("transcription" !in MeetingJson.encode(TestMeetings.mono))
+        val decoded = MeetingJson.decode(TestMeetings.resource("/golden/meeting-mono-complete.json"))
+        assertEquals(null, (decoded as DecodeResult.Success).meeting.transcription)
+    }
+
+    @Test
+    fun `the transcription golden round-trips and validates`() {
+        val text = TestMeetings.resource(transcribedPath)
+        assertEquals(text, MeetingJson.encode(TestMeetings.monoTranscribed))
+        assertEquals(DecodeResult.Success(TestMeetings.monoTranscribed), MeetingJson.decode(text))
+        assertEquals(emptyList(), MeetingValidator.validate(TestMeetings.monoTranscribed))
+        assertEquals(emptyList(), SchemaCheck.violations(text))
+    }
+
+    @Test
+    fun `unknown keys inside the transcription block are ignored`() {
+        val text = TestMeetings.resource(transcribedPath)
+            .replace("\"segmentCount\": 4", "\"segmentCount\": 4,\n      \"futureField\": [1, 2]")
+            .replace("\"resumable\": true", "\"resumable\": true,\n      \"futureJobField\": \"x\"")
+        assertEquals(DecodeResult.Success(TestMeetings.monoTranscribed), MeetingJson.decode(text))
+    }
+
+    @Test
+    fun `the schema rejects a broken transcription block`() {
+        val text = TestMeetings.resource(transcribedPath)
+        assertTrue(SchemaCheck.violations(text.replace("\"language\": \"de\"", "\"language\": \"DE\"")).isNotEmpty())
+        assertTrue(SchemaCheck.violations(text.replace("\"failureReason\": \"recording-started\",", "")).isNotEmpty())
+        assertTrue(SchemaCheck.violations(text.replace("\"state\": \"failed\"", "\"state\": \"done\"")).isNotEmpty())
+    }
+
+    private fun transcribed(
+        transcript: (TranscriptInfo) -> TranscriptInfo = { it },
+        job: (app.meetingrecorder.core.model.JobInfo) -> app.meetingrecorder.core.model.JobInfo = { it },
+    ): MeetingMetadata {
+        val block = TestMeetings.monoTranscribed.transcription!!
+        return TestMeetings.monoTranscribed.copy(
+            transcription = MeetingTranscription(transcript(block.transcript!!), job(block.job!!)),
+        )
+    }
+
+    @Test
+    fun `the transcript block rules are reported`() {
+        assertTrue("transcription" in rules(transcribed({ it.copy(requestedLanguage = "automatic!") })))
+        assertTrue("transcription" in rules(transcribed({ it.copy(requestedLanguage = "AUTO") })))
+        assertTrue("transcription" in rules(transcribed({ it.copy(language = "auto") })))
+        assertTrue("transcription" in rules(transcribed({ it.copy(language = "d") })))
+        assertTrue("transcription" in rules(transcribed({ it.copy(modelId = "") })))
+        assertTrue("transcription" in rules(transcribed({ it.copy(modelName = "") })))
+        assertTrue("transcription" in rules(transcribed({ it.copy(processingMs = -1) })))
+        assertTrue("transcription" in rules(transcribed({ it.copy(segmentCount = -1) })))
+        assertTrue("transcription" in rules(transcribed({ it.copy(completedAt = "tomorrow") })))
+        assertEquals(emptyList(), MeetingValidator.validate(transcribed({ it.copy(requestedLanguage = "de", language = "eng") })))
+    }
+
+    @Test
+    fun `the job block rules are reported`() {
+        assertTrue("transcription" in rules(transcribed(job = { it.copy(requestedLanguage = "German") })))
+        assertTrue("transcription" in rules(transcribed(job = { it.copy(modelId = "") })))
+        assertTrue("transcription" in rules(transcribed(job = { it.copy(startedAt = "now") })))
+        assertTrue("transcription" in rules(transcribed(job = { it.copy(failureReason = null) })))
+        // An in-progress job needs no failure reason.
+        assertEquals(
+            emptyList(),
+            MeetingValidator.validate(
+                transcribed(job = { it.copy(state = JobState.IN_PROGRESS, failureReason = null, failureMessage = null, resumable = false) }),
+            ),
+        )
+        assertEquals(FailureReason.RECORDING_STARTED, TestMeetings.monoTranscribed.transcription!!.job!!.failureReason)
     }
 }

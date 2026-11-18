@@ -10,6 +10,14 @@ public object MeetingFolderLayout {
     public const val AUDIO_FILE: String = "audio.wav"
     public const val PHOTOS_DIR: String = "photos"
 
+    // Phase 2 (contracts/transcript-folder.md).
+    public const val TRANSCRIPT_JSON_FILE: String = "transcript.json"
+    public const val TRANSCRIPT_MD_FILE: String = "transcript.md"
+    public const val TRANSCRIPT_WORK_FILE: String = "transcript.work.jsonl"
+
+    /** Suffix of a staging file that a commit writes before it replaces the final file. */
+    public const val PART_SUFFIX: String = ".part"
+
     private val folderTime = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")
     private val titleTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
     private val photoName = Regex("""^photo-(\d{3,})\.jpg$""")
@@ -39,6 +47,14 @@ public object MeetingFolderLayout {
     /** The number for the next photo, given the file names already in `photos/`. */
     public fun nextPhotoNumber(existingPhotoFileNames: Collection<String>): Int =
         (existingPhotoFileNames.mapNotNull { photoName.matchEntire(it)?.groupValues?.get(1)?.toIntOrNull() }.maxOrNull() ?: 0) + 1
+
+    /** The staging name of [name], for example `transcript.json.part`. */
+    public fun partName(name: String): String = name + PART_SUFFIX
+
+    private val stagedFiles = listOf(TRANSCRIPT_JSON_FILE, TRANSCRIPT_MD_FILE, METADATA_FILE).map(::partName).toSet()
+
+    /** True for the staging files of a commit or a metadata write (never for the final files). */
+    public fun isStagingFile(name: String): Boolean = name in stagedFiles
 
     /** A directory is a meeting folder when it contains `meeting.json` or `audio.wav`. */
     public fun isMeetingFolder(childNames: Collection<String>): Boolean =

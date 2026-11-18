@@ -17,3 +17,4 @@ rootProject.name = "meeting-recorder"
 
 include(":core")
 include(":app")
+include(":whisper")

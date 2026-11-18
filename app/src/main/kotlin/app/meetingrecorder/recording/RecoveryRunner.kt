@@ -4,9 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import app.meetingrecorder.core.folder.MeetingFolderLayout
-import app.meetingrecorder.core.guide.ClaudeGuide
 import app.meetingrecorder.core.json.MeetingJson
-import app.meetingrecorder.core.model.MeetingMetadata
 import app.meetingrecorder.core.model.MeetingStatus
 import app.meetingrecorder.core.recovery.RecoveryPlanner
 import app.meetingrecorder.core.recovery.RecoveryPlanner.Action
@@ -14,6 +12,7 @@ import app.meetingrecorder.core.recovery.RecoveryPlanner.MetadataState
 import app.meetingrecorder.core.wav.RepairResult
 import app.meetingrecorder.core.wav.WavHeader
 import app.meetingrecorder.storage.DocumentRef
+import app.meetingrecorder.storage.MeetingMetadataStore
 import app.meetingrecorder.storage.SafMeetingStorage
 import java.io.IOException
 
@@ -24,6 +23,7 @@ import java.io.IOException
  */
 class RecoveryRunner(context: Context, treeUri: Uri) {
     private val storage = SafMeetingStorage(context, treeUri)
+    private val metadata = MeetingMetadataStore.forStorage(storage)
 
     private companion object {
         const val TAG = "RecoveryRunner"
@@ -88,7 +88,7 @@ class RecoveryRunner(context: Context, treeUri: Uri) {
         if (plan.actions.isEmpty()) {
             return Outcome(folder.name, recovered = false, unrecoverable = plan.unrecoverable, unlistedPhotos = emptyList())
         }
-        apply(plan.actions, folder, children, audio)
+        apply(plan.actions, folder, audio)
         return Outcome(folder.name, recovered = true, unrecoverable = null, unlistedPhotos = plan.unlistedPhotos)
     }
 
@@ -110,8 +110,7 @@ class RecoveryRunner(context: Context, treeUri: Uri) {
         }
     }.getOrDefault(null to null)
 
-    private fun apply(actions: List<Action>, folder: DocumentRef, children: List<DocumentRef>, audio: DocumentRef?) {
-        var recovered: MeetingMetadata? = null
+    private fun apply(actions: List<Action>, folder: DocumentRef, audio: DocumentRef?) {
         for (action in actions) {
             when (action) {
                 Action.RepairWav -> {
@@ -120,21 +119,12 @@ class RecoveryRunner(context: Context, treeUri: Uri) {
                     if (result is RepairResult.Unrecoverable) throw IOException(result.reason)
                 }
                 is Action.WriteMetadata -> {
-                    recovered = action.meeting
-                    writeFile(folder, children, MeetingFolderLayout.METADATA_FILE, SafMeetingStorage.MIME_JSON, MeetingJson.encode(action.meeting))
+                    // The store replaces meeting.json through the staged protocol and regenerates CLAUDE.md.
+                    if (!metadata.replace(folder.name, action.meeting)) throw IOException("cannot write ${MeetingFolderLayout.METADATA_FILE}")
                 }
-                Action.WriteGuide -> {
-                    val meeting = recovered ?: continue
-                    writeFile(folder, children, MeetingFolderLayout.GUIDE_FILE, SafMeetingStorage.MIME_MARKDOWN, ClaudeGuide.generate(meeting))
-                }
+                // Already done by the metadata store together with the metadata.
+                Action.WriteGuide -> Unit
             }
         }
-    }
-
-    private fun writeFile(folder: DocumentRef, children: List<DocumentRef>, name: String, mime: String, text: String) {
-        val target = children.firstOrNull { it.name == name }?.uri
-            ?: storage.createFile(folder.uri, name, mime)
-            ?: throw IOException("cannot create $name")
-        storage.writeText(target, text)
     }
 }

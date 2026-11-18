@@ -4,6 +4,7 @@ import app.meetingrecorder.core.model.ChannelLayout
 import app.meetingrecorder.core.model.MeetingMetadata
 import app.meetingrecorder.core.model.MeetingStatus
 import app.meetingrecorder.core.model.Source
+import app.meetingrecorder.core.model.TranscriptInfo
 import app.meetingrecorder.core.time.Timeline
 
 /**
@@ -106,19 +107,23 @@ public object ClaudeGuide {
         }
         appendLine()
 
-        appendLine("## Suggested follow-up tasks")
-        appendLine()
-        appendLine(
-            "Transcription is not part of this folder yet. Useful tasks for an AI assistant, for example " +
-                "Claude Code, with this folder as input:",
-        )
-        appendLine()
-        appendLine("1. **Summary**: \"Summarize this meeting in 10 lines. Use the photos as visual context.\"")
-        appendLine("2. **Minutes**: \"Write meeting minutes with topics, decisions and open questions.\"")
-        appendLine("3. **Action items**: \"List the action items with owner and due date, if mentioned.\"")
-        appendLine()
-        appendLine("Write results as new Markdown files in this folder (for example `summary.md`); do not edit `meeting.json`.")
-        appendLine()
+        val transcript = meeting.transcription?.transcript
+        if (transcript != null) {
+            appendTranscriptSection(transcript)
+        } else {
+            appendLine("## Suggested follow-up tasks")
+            appendLine()
+            appendLine("No transcript has been created for this meeting yet.")
+            appendLine()
+            appendLine("Useful tasks for an AI assistant, for example Claude Code, with this folder as input:")
+            appendLine()
+            appendLine("1. **Summary**: \"Summarize this meeting in 10 lines. Use the photos as visual context.\"")
+            appendLine("2. **Minutes**: \"Write meeting minutes with topics, decisions and open questions.\"")
+            appendLine("3. **Action items**: \"List the action items with owner and due date, if mentioned.\"")
+            appendLine()
+            appendLine("Write results as new Markdown files in this folder (for example `summary.md`); do not edit `meeting.json`.")
+            appendLine()
+        }
 
         appendLine("## Format reference")
         appendLine()
@@ -134,6 +139,55 @@ public object ClaudeGuide {
         appendLine("- `sourceSwitches`: `atFrame`, `atMs`, `fromSourceId`, `toSourceId`, `reason`, `channelsDuplicated`.")
         appendLine("- `photos`: `file` (path inside this folder), `atFrame`, `atMs`.")
         appendLine("- `dropouts`: `atFrame`, `atMs`, `droppedFrames` (audio missing from the file at that position).")
+    }
+
+    /**
+     * The section of a meeting with a committed transcript (contracts/transcript-folder.md, "CLAUDE.md
+     * addition"). English whatever the device language is. It also carries the follow-up tasks.
+     */
+    private fun StringBuilder.appendTranscriptSection(transcript: TranscriptInfo) {
+        appendLine("## Transcript")
+        appendLine()
+        appendLine(
+            "A transcript of this meeting was created on the phone with the model \"${transcript.modelName}\" " +
+                "in the language `${transcript.language}`.",
+        )
+        appendLine()
+        appendLine(
+            "1. **Files**: `transcript.json` is the machine-readable transcript. `transcript.md` is a readable " +
+                "rendering of it, generated from `transcript.json` and the photos in `meeting.json`; read it first. " +
+                "Editing `transcript.md` by hand is allowed, but it is overwritten when the meeting is transcribed again.",
+        )
+        appendLine(
+            "2. **Fields of `transcript.json`**: `segments`, each with `id`, `startFrame` and `endFrame` " +
+                "(authoritative: frames of `audio.wav`, the same timeline and sample rate as `meeting.json`), " +
+                "`startMs` and `endMs` (derived), `text` and `speaker` (always `null` for now). It also names the " +
+                "model (`model`) and the language (`language`). The language is one for the whole meeting; " +
+                "segments are not labelled per language.",
+        )
+        appendLine(
+            "3. **Photos in the text**: photos are not part of `transcript.json`. In `transcript.md` a photo is " +
+                "placed immediately before the first segment that starts after the photo's `atFrame`, or after the " +
+                "last segment when there is none. A photo taken during a segment therefore comes right after that " +
+                "segment; a segment that starts exactly at the photo's position comes before it.",
+        )
+        appendLine(
+            "4. **The `transcription` block of `meeting.json`**: `transcription.transcript` records the model " +
+                "(`modelName` \"${transcript.modelName}\", `modelId` `${transcript.modelId}`), the language " +
+                "(`language` `${transcript.language}`, requested as `requestedLanguage` `${transcript.requestedLanguage}`), " +
+                "when it was completed and how many segments it has (${transcript.segmentCount}).",
+        )
+        appendLine(
+            "5. **Suggested follow-up tasks**: read `transcript.md` rather than `audio.wav`. The text was " +
+                "recognised automatically, so names and numbers may be wrong. Useful tasks for an AI assistant, " +
+                "for example Claude Code, with this folder as input:",
+        )
+        appendLine("   - **Summary**: \"Summarize this meeting in 10 lines. Use the photos as visual context.\"")
+        appendLine("   - **Minutes**: \"Write meeting minutes with topics, decisions and open questions.\"")
+        appendLine("   - **Action items**: \"List the action items with owner and due date, if mentioned.\"")
+        appendLine()
+        appendLine("Write results as new Markdown files in this folder (for example `summary.md`); do not edit `meeting.json` or `transcript.json`.")
+        appendLine()
     }
 
     private fun statusNote(meeting: MeetingMetadata): String? = when (meeting.status) {

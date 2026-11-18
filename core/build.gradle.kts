@@ -33,6 +33,8 @@ sourceSets {
     test {
         // The tests read the one and only copy of the documented schema.
         resources.srcDir("../specs/001-meeting-recording-mvp/contracts")
+        // Phase 2: transcript.schema.json and the examples (one copy only).
+        resources.srcDir("../specs/002-offline-transcription/contracts")
     }
 }
 

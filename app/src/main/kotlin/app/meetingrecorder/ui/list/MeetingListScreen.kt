@@ -32,7 +32,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.meetingrecorder.R
 import app.meetingrecorder.core.model.MeetingStatus
 import app.meetingrecorder.core.time.Timeline
+import app.meetingrecorder.core.transcription.TranscriptionStatus
 import app.meetingrecorder.storage.MeetingEntry
+import app.meetingrecorder.ui.transcription.StartTranscriptionDialog
+import app.meetingrecorder.ui.transcription.StatusChip
+import app.meetingrecorder.ui.transcription.startMessage
 import java.text.DateFormat
 import java.util.Date
 
@@ -42,12 +46,15 @@ fun MeetingListScreen(
     onOpenMeeting: (String) -> Unit,
     onNewRecording: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenModels: () -> Unit,
     viewModel: MeetingListViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
     var renaming by remember { mutableStateOf<MeetingEntry?>(null) }
     var deleting by remember { mutableStateOf<MeetingEntry?>(null) }
+    var transcribing by remember { mutableStateOf<MeetingEntry?>(null) }
 
     Column(
         modifier = Modifier
@@ -76,6 +83,9 @@ fun MeetingListScreen(
                         onOpen = { onOpenMeeting(entry.folderName) },
                         onRename = { renaming = entry },
                         onDelete = { deleting = entry },
+                        onTranscribe = { transcribing = entry },
+                        percent = state.transcribingPercent.takeIf { state.transcribing == entry.folderName },
+                        onStatusAction = { mode -> viewModel.restart(entry, mode) },
                     )
                 }
             }
@@ -98,9 +108,19 @@ fun MeetingListScreen(
             onDismiss = { renaming = null },
         )
     }
+    transcribing?.let { entry ->
+        StartTranscriptionDialog(
+            folderName = entry.folderName,
+            replacing = entry.transcription == TranscriptionStatus.Done,
+            onDismiss = { transcribing = null },
+            onOpenModels = onOpenModels,
+            onResult = { result -> startMessage(context, result)?.let(viewModel::showMessage) },
+        )
+    }
     deleting?.let { entry ->
         DeleteDialog(
             title = entry.title,
+            warnRunning = viewModel.deleteNeedsWarning(entry),
             onConfirm = {
                 viewModel.delete(entry)
                 deleting = null
@@ -137,11 +157,16 @@ private fun RenameDialog(current: String, onConfirm: (String) -> Unit, onDismiss
 }
 
 @Composable
-private fun DeleteDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+private fun DeleteDialog(title: String, warnRunning: Boolean, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(text = stringResource(R.string.list_delete_title)) },
-        text = { Text(text = stringResource(R.string.list_delete_message, title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(text = stringResource(R.string.list_delete_message, title))
+                if (warnRunning) Text(text = stringResource(R.string.meeting_delete_running_warning), color = MaterialTheme.colorScheme.error)
+            }
+        },
         confirmButton = {
             TextButton(onClick = onConfirm) { Text(text = stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
         },
@@ -158,6 +183,9 @@ private fun MeetingRow(
     onOpen: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
+    onTranscribe: () -> Unit,
+    percent: Int?,
+    onStatusAction: (app.meetingrecorder.transcription.Mode) -> Unit,
 ) {
     val started = remember(entry.startedAtMs) {
         DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(entry.startedAtMs))
@@ -169,6 +197,7 @@ private fun MeetingRow(
             entry.durationMs?.let {
                 Text(text = stringResource(R.string.list_duration, Timeline.format(it)), style = MaterialTheme.typography.bodyMedium)
             }
+            StatusChip(entry, percent, onStatusAction)
             when {
                 !entry.metadataReadable -> Text(text = stringResource(R.string.list_unreadable), color = MaterialTheme.colorScheme.error)
                 entry.status == MeetingStatus.RECOVERED -> Text(text = stringResource(R.string.list_recovered))
@@ -177,6 +206,9 @@ private fun MeetingRow(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (entry.metadataReadable) {
                         TextButton(onClick = onRename) { Text(text = stringResource(R.string.action_rename)) }
+                        TextButton(onClick = onTranscribe) {
+                            Text(text = stringResource(if (entry.transcription == TranscriptionStatus.Done) R.string.transcribe_again else R.string.transcribe_action))
+                        }
                     }
                     TextButton(onClick = onDelete) { Text(text = stringResource(R.string.action_delete)) }
                 }

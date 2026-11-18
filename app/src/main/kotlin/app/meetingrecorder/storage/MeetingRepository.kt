@@ -2,12 +2,21 @@ package app.meetingrecorder.storage
 
 import android.net.Uri
 import app.meetingrecorder.core.folder.MeetingFolderLayout
-import app.meetingrecorder.core.guide.ClaudeGuide
 import app.meetingrecorder.core.json.MeetingJson
-import app.meetingrecorder.core.model.MeetingEditor
 import app.meetingrecorder.core.model.MeetingMetadata
 import app.meetingrecorder.core.model.MeetingStatus
 import app.meetingrecorder.core.time.Timeline
+import app.meetingrecorder.core.transcript.Transcript
+import app.meetingrecorder.core.transcript.TranscriptJson
+import app.meetingrecorder.core.transcript.TranscriptValidator
+import app.meetingrecorder.core.transcription.DetailHint
+import app.meetingrecorder.core.transcription.Resolved
+import app.meetingrecorder.core.transcription.StatusResolver
+import app.meetingrecorder.core.transcription.TranscriptState
+import app.meetingrecorder.core.transcription.TranscriptionStatus
+import app.meetingrecorder.core.transcription.WorkFile
+import app.meetingrecorder.core.transcription.WorkFileState
+import app.meetingrecorder.core.transcription.WorkRecord
 import app.meetingrecorder.core.wav.WavHeader
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -26,7 +35,21 @@ data class MeetingEntry(
     val status: MeetingStatus?,
     /** False when `meeting.json` is missing, unreadable or of an unknown version. */
     val metadataReadable: Boolean,
+    /** Computed from the folder listing and the `transcription` block (FR-035); never read from a cache alone. */
+    val transcription: TranscriptionStatus = TranscriptionStatus.None,
+    /** True when a failed job can continue from its work file. */
+    val resumable: Boolean = false,
+    /** Model and language of the latest job, for "Resume", "Start over" and "Retry". */
+    val jobModelId: String? = null,
+    val jobLanguage: String? = null,
 )
+
+/** The state of `transcript.json`: an unreadable file never shows as an empty transcript (FR-030). */
+sealed interface TranscriptLoad {
+    data object Missing : TranscriptLoad
+    data class Valid(val transcript: Transcript) : TranscriptLoad
+    data object Unreadable : TranscriptLoad
+}
 
 /** Everything the playback screen needs about one meeting. [meeting] is null when the metadata is unreadable. */
 class MeetingDetail(
@@ -36,10 +59,21 @@ class MeetingDetail(
     val audioUri: Uri,
     /** Photo document URIs by their path in `meeting.json` (for example `photos/photo-001.jpg`). */
     val photoUris: Map<String, Uri>,
+    val transcript: TranscriptLoad = TranscriptLoad.Missing,
+    /** The resolved transcription status with the hint for the detail screen (job failed, banner, ...). */
+    val resolved: Resolved = Resolved(TranscriptionStatus.None, DetailHint.None),
 )
 
 /** Lists the meetings found in the storage folder. The folders are the only source of truth. */
-class MeetingRepository(private val storage: SafMeetingStorage) {
+class MeetingRepository(
+    private val storage: SafMeetingStorage,
+    /** Whether a transcription of the folder is running in this process (the registry's live flag). */
+    private val isLive: (folderName: String) -> Boolean = { false },
+) {
+    private val metadata = MeetingMetadataStore.forStorage(storage)
+    private val renamer = MeetingRenamer(metadata) { name ->
+        storage.findChild(storage.rootUri, name)?.takeIf { it.isDirectory }?.let { SafFolderFiles(storage, it.uri) }
+    }
 
     /** All meetings, newest first. Does blocking storage I/O: call it off the main thread. */
     fun list(): List<MeetingEntry> =
@@ -57,32 +91,51 @@ class MeetingRepository(private val storage: SafMeetingStorage) {
         val photos = children.firstOrNull { it.isDirectory && it.name == MeetingFolderLayout.PHOTOS_DIR }
             ?.let { dir -> storage.listChildren(dir.uri).associate { "${MeetingFolderLayout.PHOTOS_DIR}/${it.name}" to it.uri } }
             .orEmpty()
-        return MeetingDetail(folderName, meeting?.title ?: folderName, meeting, audio.uri, photos)
+        val transcript = loadTranscript(children)
+        val work = workState(children)
+        val resolved = StatusResolver.resolve(
+            block = meeting?.transcription,
+            transcript = when (transcript) {
+                TranscriptLoad.Missing -> TranscriptState.MISSING
+                is TranscriptLoad.Valid -> TranscriptState.VALID
+                TranscriptLoad.Unreadable -> TranscriptState.UNREADABLE
+            },
+            work = work,
+            live = isLive(folderName),
+        )
+        return MeetingDetail(folderName, meeting?.title ?: folderName, meeting, audio.uri, photos, transcript, resolved)
     }
 
     /**
-     * Changes only the title in `meeting.json` (one truncating write) and regenerates `CLAUDE.md` so it
-     * stays consistent. The folder name never changes (FR-027). Returns false when the metadata cannot
-     * be read, the title is invalid or a write fails.
+     * Changes only the title in `meeting.json` and regenerates `CLAUDE.md` (and `transcript.md` when a transcript
+     * exists) so they stay consistent, as one locked read-modify-write through [MeetingMetadataStore] (it cannot
+     * overwrite a concurrent transcription update). The folder name never changes (FR-027). Returns false when the metadata cannot be read, the
+     * title is invalid or a write fails.
      */
-    fun rename(folderName: String, newTitle: String): Boolean = runCatching {
-        val folder = storage.listChildren(storage.rootUri).firstOrNull { it.isDirectory && it.name == folderName }
-            ?: return@runCatching false
-        val children = storage.listChildren(folder.uri)
-        val metadataFile = children.firstOrNull { it.name == MeetingFolderLayout.METADATA_FILE } ?: return@runCatching false
-        val meeting = readMeeting(children) ?: return@runCatching false
-        val renamed = MeetingEditor.rename(meeting, newTitle)
-        storage.writeText(metadataFile.uri, MeetingJson.encode(renamed))
-        val guide = children.firstOrNull { it.name == MeetingFolderLayout.GUIDE_FILE }?.uri
-            ?: storage.createFile(folder.uri, MeetingFolderLayout.GUIDE_FILE, SafMeetingStorage.MIME_MARKDOWN)
-        guide?.let { storage.writeText(it, ClaudeGuide.generate(renamed)) }
-        true
-    }.getOrDefault(false)
+    fun rename(folderName: String, newTitle: String): Boolean = runCatching { renamer.rename(folderName, newTitle) }.getOrDefault(false)
 
     /** Deletes the whole meeting folder. Returns true when it is gone. */
     fun delete(folderName: String): Boolean {
         val folder = storage.listChildren(storage.rootUri).firstOrNull { it.isDirectory && it.name == folderName } ?: return true
         return storage.delete(folder.uri)
+    }
+
+    /** Decodes and validates `transcript.json` (off the main thread: the caller is on IO). */
+    private fun loadTranscript(children: List<DocumentRef>): TranscriptLoad {
+        val file = children.firstOrNull { it.name == MeetingFolderLayout.TRANSCRIPT_JSON_FILE } ?: return TranscriptLoad.Missing
+        val decoded = storage.readText(file.uri)?.let(TranscriptJson::decode)
+        val transcript = (decoded as? TranscriptJson.DecodeResult.Success)?.transcript ?: return TranscriptLoad.Unreadable
+        return if (TranscriptValidator.validate(transcript).isEmpty()) TranscriptLoad.Valid(transcript) else TranscriptLoad.Unreadable
+    }
+
+    private fun workState(children: List<DocumentRef>): WorkFileState {
+        val file = children.firstOrNull { it.name == MeetingFolderLayout.TRANSCRIPT_WORK_FILE } ?: return WorkFileState.NONE
+        val records = storage.readText(file.uri)?.let { WorkFile.decode(it.toByteArray(Charsets.UTF_8)).records }.orEmpty()
+        return when {
+            records.firstOrNull() !is WorkRecord.Header -> WorkFileState.NONE
+            WorkFile.isComplete(records) -> WorkFileState.COMPLETE
+            else -> WorkFileState.INCOMPLETE
+        }
     }
 
     private fun readMeeting(children: List<DocumentRef>): MeetingMetadata? {
@@ -98,6 +151,8 @@ class MeetingRepository(private val storage: SafMeetingStorage) {
         val decoded = metadataFile?.let { storage.readText(it.uri) }?.let(MeetingJson::decode)
         if (decoded is MeetingJson.DecodeResult.Success) {
             val meeting = decoded.meeting
+            val names = children.map { it.name }.toSet()
+            val live = isLive(folder.name)
             return MeetingEntry(
                 folderName = folder.name,
                 folderUri = folder.uri,
@@ -106,6 +161,10 @@ class MeetingRepository(private val storage: SafMeetingStorage) {
                 durationMs = meeting.audio.durationMs,
                 status = meeting.status,
                 metadataReadable = true,
+                transcription = MeetingEntryStatus.of(names, meeting.transcription, live),
+                resumable = MeetingEntryStatus.resumable(names, meeting.transcription, live),
+                jobModelId = meeting.transcription?.job?.modelId,
+                jobLanguage = meeting.transcription?.job?.requestedLanguage,
             )
         }
         val audio = children.firstOrNull { it.name == MeetingFolderLayout.AUDIO_FILE }
@@ -117,6 +176,7 @@ class MeetingRepository(private val storage: SafMeetingStorage) {
             durationMs = audio?.let { wavDurationMs(it) },
             status = null,
             metadataReadable = false,
+            transcription = MeetingEntryStatus.of(children.map { it.name }.toSet(), null, isLive(folder.name)),
         )
     }
 

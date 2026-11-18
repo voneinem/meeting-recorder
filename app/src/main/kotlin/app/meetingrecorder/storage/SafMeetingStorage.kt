@@ -7,6 +7,14 @@ import android.provider.DocumentsContract.Document
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import app.meetingrecorder.core.folder.MeetingFolderLayout
+
+/**
+ * How [SafMeetingStorage.replaceText] replaces a file: [STAGED] writes `<name>.part`, then swaps it in
+ * (a crash leaves either the old file or a complete `.part`); [DIRECT] truncates and writes in place, for
+ * providers that cannot rename or delete (research R-12).
+ */
+enum class ReplaceStrategy { STAGED, DIRECT }
 
 /** A file or folder inside the storage folder. */
 data class DocumentRef(
@@ -25,6 +33,11 @@ data class DocumentRef(
 class SafMeetingStorage(context: Context, private val treeUri: Uri) {
     private val resolver = context.contentResolver
 
+    /** What the provider supports, read from `COLUMN_FLAGS` by [probe]; [ReplaceStrategy.DIRECT] until then. */
+    @Volatile
+    var replaceStrategy: ReplaceStrategy = ReplaceStrategy.DIRECT
+        private set
+
     /** The document that represents the storage folder itself. */
     val rootUri: Uri =
         DocumentsContract.buildDocumentUriUsingTree(treeUri, DocumentsContract.getTreeDocumentId(treeUri))
@@ -41,6 +54,7 @@ class SafMeetingStorage(context: Context, private val treeUri: Uri) {
         val probe = createFile(rootUri, PROBE_NAME, MIME_OCTET_STREAM)
             ?: throw IOException("the folder does not allow creating files")
         try {
+            replaceStrategy = strategyFor(documentFlags(probe))
             ParcelSeekableStore(openDescriptor(probe, "rw")).use { store ->
                 store.writeAt(0, byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8))
                 store.writeAt(0, byteArrayOf(9))
@@ -99,6 +113,60 @@ class SafMeetingStorage(context: Context, private val treeUri: Uri) {
             }
         }
     }
+
+    /**
+     * Replaces (or creates) [name] in [parent] with [text] and returns the resulting document. With
+     * [ReplaceStrategy.STAGED] a crash at any step leaves the old file or a complete `<name>.part`; the
+     * strategy is chosen from the flags of the file being replaced. Throws [IOException] on failure.
+     */
+    fun replaceText(parent: Uri, name: String, text: String, mimeType: String = MIME_OCTET_STREAM): Uri {
+        val children = listChildren(parent)
+        val existing = children.firstOrNull { it.name == name && !it.isDirectory }
+        if (existing == null) {
+            val created = createFile(parent, name, mimeType) ?: throw IOException("cannot create $name")
+            writeText(created, text)
+            return created
+        }
+        if (strategyFor(documentFlags(existing.uri)) == ReplaceStrategy.DIRECT) {
+            writeText(existing.uri, text)
+            return existing.uri
+        }
+        val partName = MeetingFolderLayout.partName(name)
+        children.firstOrNull { it.name == partName }?.let { delete(it.uri) }
+        // octet-stream: a provider keeps the exact name `<name>.part` only for this type (see SafFolderFiles.mimeTypeOf)
+        val part = createFile(parent, partName, MIME_OCTET_STREAM) ?: throw IOException("cannot create $partName")
+        openDescriptor(part, "wt").use { descriptor ->
+            FileOutputStream(descriptor.fileDescriptor).use { stream ->
+                stream.write(text.toByteArray(Charsets.UTF_8))
+                stream.flush()
+            }
+            descriptor.fileDescriptor.sync()
+        }
+        if (!delete(existing.uri)) throw IOException("cannot remove the old $name; the new content is in $partName")
+        return rename(part, name) ?: throw IOException("cannot rename $partName to $name; the new content is in $partName")
+    }
+
+    /** Renames [document]; returns the renamed document or null when the provider refuses. */
+    fun rename(document: Uri, newName: String): Uri? =
+        runCatching { DocumentsContract.renameDocument(resolver, document, newName) }.getOrNull()
+
+    /** Opens [file] for random access positioned for appending: use [ParcelSeekableStore.append]. */
+    fun appendStore(file: Uri): ParcelSeekableStore = ParcelSeekableStore(openDescriptor(file, "rw"))
+
+    /** Opens [file] for reading only; writes through the store fail. */
+    fun openReadOnlyStore(file: Uri): ParcelSeekableStore = ParcelSeekableStore(openDescriptor(file, "r"), writable = false)
+
+    private fun documentFlags(document: Uri): Int =
+        resolver.query(document, arrayOf(Document.COLUMN_FLAGS), null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getInt(0) else 0
+        } ?: 0
+
+    private fun strategyFor(flags: Int): ReplaceStrategy =
+        if (flags and Document.FLAG_SUPPORTS_RENAME != 0 && flags and Document.FLAG_SUPPORTS_DELETE != 0) {
+            ReplaceStrategy.STAGED
+        } else {
+            ReplaceStrategy.DIRECT
+        }
 
     fun readText(file: Uri): String? = runCatching {
         openDescriptor(file, "r").use { descriptor ->

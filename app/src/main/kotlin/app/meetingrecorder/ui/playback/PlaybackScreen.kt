@@ -12,13 +12,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -43,6 +43,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.meetingrecorder.R
 import app.meetingrecorder.core.time.Timeline
+import app.meetingrecorder.storage.TranscriptLoad
+import app.meetingrecorder.ui.transcription.JobBanner
+import app.meetingrecorder.ui.transcription.StartTranscriptionDialog
+import app.meetingrecorder.ui.transcription.transcriptSection
+import app.meetingrecorder.ui.transcription.startMessage
 
 /**
  * Plays back one meeting: play and pause, a seek bar with the position, and the photos. Selecting a
@@ -51,25 +56,57 @@ import app.meetingrecorder.core.time.Timeline
 @Composable
 fun PlaybackScreen(
     onBack: () -> Unit,
+    onOpenModels: () -> Unit,
     viewModel: PlaybackViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LifecycleEventEffect(Lifecycle.Event.ON_START) { viewModel.onStart() }
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.onStop() }
 
-    Column(
+    // One lazy list: the controls and photos first, then the transcript rows (a long transcript has thousands).
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .safeDrawingPadding()
-            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        TextButton(onClick = onBack) { Text(text = stringResource(R.string.action_back)) }
+        item(key = "back") { TextButton(onClick = onBack) { Text(text = stringResource(R.string.action_back)) } }
         when {
-            state.notFound -> Text(text = stringResource(R.string.playback_not_found))
+            state.notFound -> item(key = "not-found") { Text(text = stringResource(R.string.playback_not_found)) }
             state.loading -> Unit
-            else -> PlaybackContent(state, viewModel)
+            else -> {
+                item(key = "player") {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) { PlaybackContent(state, viewModel) }
+                }
+                state.message?.let { message ->
+                    item(key = "message") {
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = stringResource(message), modifier = Modifier.weight(1f))
+                                TextButton(onClick = viewModel::messageShown) { Text(text = stringResource(R.string.action_ok)) }
+                            }
+                        }
+                    }
+                }
+                item(key = "transcribe") { TranscribeEntry(viewModel.folder, replacing = state.transcript is TranscriptLoad.Valid, onOpenModels) }
+                transcriptSection(
+                    state = state,
+                    onSeek = viewModel::seekAndPlay,
+                    onPhoto = viewModel::selectPhotoByPath,
+                    banner = {
+                        JobBanner(
+                            hint = state.resolved.hint,
+                            hasTranscript = state.transcript is TranscriptLoad.Valid,
+                            modelInstalled = state.modelInstalled,
+                            busy = state.jobPercent != null,
+                            onResume = viewModel::resumeJob,
+                            onStartOver = viewModel::startOverJob,
+                            onDismiss = viewModel::dismissJob,
+                        )
+                    },
+                )
+            }
         }
     }
 
@@ -80,6 +117,27 @@ fun PlaybackScreen(
             atMs = selected.atMs,
             bitmap = bitmap,
             onClose = viewModel::closePhoto,
+        )
+    }
+}
+
+/** The "Transcribe" button of the detail screen; it opens the start dialog and shows the answer to a refused start. */
+@Composable
+private fun TranscribeEntry(folderName: String, replacing: Boolean, onOpenModels: () -> Unit) {
+    var dialog by remember { mutableStateOf(false) }
+    var notice by remember { mutableStateOf<Int?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    OutlinedButton(onClick = { dialog = true }, modifier = Modifier.fillMaxWidth()) {
+        Text(text = stringResource(if (replacing) R.string.transcribe_again else R.string.transcribe_action))
+    }
+    notice?.let { Text(text = stringResource(it), color = MaterialTheme.colorScheme.error) }
+    if (dialog) {
+        StartTranscriptionDialog(
+            folderName = folderName,
+            replacing = replacing,
+            onDismiss = { dialog = false },
+            onOpenModels = onOpenModels,
+            onResult = { result -> notice = startMessage(context, result) },
         )
     }
 }

@@ -159,4 +159,94 @@ class MeetingEditorTest {
         assertEquals(MeetingStatus.RECOVERED, recovered.status)
         assertEquals(1_000, recovered.audio.durationMs)
     }
+
+    // --- Phase 2: transcription job and transcript ---
+
+    private val jobStart = OffsetDateTime.parse("2026-11-16T22:40:00+01:00")
+    private val transcript = TestMeetings.monoTranscribed.transcription!!.transcript!!
+    private val finishedMeeting = TestMeetings.mono
+
+    @Test
+    fun `startJob writes an in-progress job and leaves a committed transcript untouched`() {
+        val fresh = MeetingEditor.startJob(finishedMeeting, "small-q5_1", "auto", jobStart)
+        val job = fresh.transcription!!.job!!
+        assertEquals(JobState.IN_PROGRESS, job.state)
+        assertEquals("small-q5_1", job.modelId)
+        assertEquals("auto", job.requestedLanguage)
+        assertEquals("2026-11-16T22:40:00+01:00", job.startedAt)
+        assertEquals(null, job.failureReason)
+        assertEquals(null, fresh.transcription.transcript)
+
+        val withTranscript = finishedMeeting.copy(transcription = MeetingTranscription(transcript = transcript))
+        val again = MeetingEditor.startJob(withTranscript, "medium-q5_0", "de", jobStart)
+        assertEquals(transcript, again.transcription!!.transcript)
+        assertEquals("medium-q5_0", again.transcription.job!!.modelId)
+        assertEquals(emptyList(), MeetingValidator.validate(again))
+    }
+
+    @Test
+    fun `startJob replaces an older job`() {
+        val first = MeetingEditor.startJob(finishedMeeting, "small-q5_1", "auto", jobStart)
+        val failed = MeetingEditor.failJob(first, FailureReason.INTERRUPTED, null, resumable = true)
+        val second = MeetingEditor.startJob(failed, "small-q5_1", "de", jobStart)
+        val job = second.transcription!!.job!!
+        assertEquals(JobState.IN_PROGRESS, job.state)
+        assertEquals("de", job.requestedLanguage)
+        assertEquals(null, job.failureReason)
+        assertEquals(false, job.resumable)
+    }
+
+    @Test
+    fun `failJob records reason, message and resumable`() {
+        val running = MeetingEditor.startJob(finishedMeeting, "small-q5_1", "auto", jobStart)
+        val failed = MeetingEditor.failJob(running, FailureReason.RECORDING_STARTED, "stopped because a recording was started", true)
+        val job = failed.transcription!!.job!!
+        assertEquals(JobState.FAILED, job.state)
+        assertEquals(FailureReason.RECORDING_STARTED, job.failureReason)
+        assertEquals("stopped because a recording was started", job.failureMessage)
+        assertTrue(job.resumable)
+        assertEquals("small-q5_1", job.modelId)
+        assertEquals(emptyList(), MeetingValidator.validate(failed))
+    }
+
+    @Test
+    fun `failJob needs a job`() {
+        assertFailsWith<IllegalArgumentException> {
+            MeetingEditor.failJob(finishedMeeting, FailureReason.ERROR, null, false)
+        }
+    }
+
+    @Test
+    fun `clearJob removes only the job`() {
+        val both = TestMeetings.monoTranscribed
+        val cleared = MeetingEditor.clearJob(both)
+        assertEquals(transcript, cleared.transcription!!.transcript)
+        assertEquals(null, cleared.transcription.job)
+    }
+
+    @Test
+    fun `clearJob on a meeting with no transcript leaves no empty block`() {
+        val running = MeetingEditor.startJob(finishedMeeting, "small-q5_1", "auto", jobStart)
+        assertEquals(finishedMeeting, MeetingEditor.clearJob(running))
+        assertEquals(finishedMeeting, MeetingEditor.clearJob(finishedMeeting))
+    }
+
+    @Test
+    fun `commitTranscript sets the transcript and removes the job`() {
+        val running = MeetingEditor.startJob(finishedMeeting, "small-q5_1", "auto", jobStart)
+        val done = MeetingEditor.commitTranscript(running, transcript)
+        assertEquals(MeetingTranscription(transcript = transcript, job = null), done.transcription)
+        assertEquals(emptyList(), MeetingValidator.validate(done))
+
+        val replaced = MeetingEditor.commitTranscript(TestMeetings.monoTranscribed, transcript.copy(language = "en"))
+        assertEquals("en", replaced.transcription!!.transcript!!.language)
+        assertEquals(null, replaced.transcription.job)
+    }
+
+    @Test
+    fun `renaming keeps the transcription block`() {
+        val renamed = MeetingEditor.rename(TestMeetings.monoTranscribed, "New title")
+        assertEquals("New title", renamed.title)
+        assertEquals(TestMeetings.monoTranscribed.transcription, renamed.transcription)
+    }
 }

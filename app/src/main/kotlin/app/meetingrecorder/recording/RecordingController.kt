@@ -33,7 +33,14 @@ import kotlinx.coroutines.withTimeoutOrNull
  * in the other process and exposes its state and events as flows. A recording keeps running when the
  * UI process dies; a new controller re-attaches with [attachIfRunning].
  */
-class RecordingController(context: Context) {
+class RecordingController(
+    context: Context,
+    /**
+     * Called as the very first statement of [start]: the recording has priority over transcription and model
+     * downloads (FR-017), so `MeetingRecorderApp` stops them here. It must not block and is not awaited.
+     */
+    private val onBeforeStart: () -> Unit = {},
+) {
     private val context = context.applicationContext
 
     private val _state = MutableStateFlow(RecordingState())
@@ -109,6 +116,7 @@ class RecordingController(context: Context) {
      * recording did not start; the reason arrives as a [RecordingEvent.Error] on [events].
      */
     suspend fun start(title: String?, treeUri: Uri, deviceId: Int = BUILT_IN_DEVICE_ID): Boolean {
+        onBeforeStart()
         val bound = service ?: connect() ?: return false
         return withContext(Dispatchers.IO) {
             try {

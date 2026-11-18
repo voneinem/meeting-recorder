@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: the same rules as the release file plus cleartext to 127.0.0.1 for the loopback
+     server of the download tests. The release file MUST NOT contain this entry. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <!-- Empty on purpose: without this element the system CAs would be trusted for every host. -->
+        <trust-anchors />
+    </base-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">huggingface.co</domain>
+        <domain includeSubdomains="true">hf.co</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>

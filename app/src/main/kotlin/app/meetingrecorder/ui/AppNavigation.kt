@@ -17,6 +17,7 @@ import app.meetingrecorder.storage.StorageStatus
 import app.meetingrecorder.ui.list.MeetingListScreen
 import app.meetingrecorder.ui.playback.PlaybackScreen
 import app.meetingrecorder.ui.record.RecordScreen
+import app.meetingrecorder.ui.models.ModelSettingsScreen
 import app.meetingrecorder.ui.settings.SettingsScreen
 import app.meetingrecorder.ui.setup.ConsentScreen
 import app.meetingrecorder.ui.setup.SetupScreen
@@ -27,6 +28,7 @@ object Routes {
     const val RECORD = "record"
     const val LIST = "list"
     const val SETTINGS = "settings"
+    const val MODELS = "models"
     const val PLAYBACK = "playback/{folder}"
 
     fun playback(folder: String) = "playback/${Uri.encode(folder)}"
@@ -40,7 +42,7 @@ object Routes {
  * sent back to the setup.
  */
 @Composable
-fun AppNavigation(preferences: AppPreferences) {
+fun AppNavigation(preferences: AppPreferences, openFolder: String? = null, onFolderOpened: () -> Unit = {}) {
     val navController = rememberNavController()
     val context = LocalContext.current
     val start = remember {
@@ -55,6 +57,14 @@ fun AppNavigation(preferences: AppPreferences) {
         if (preferences.storageTreeUri != null) {
             val status = StorageGuard(context, preferences).check()
             if (status !is StorageStatus.Ok) navController.navigate(Routes.setup(lost = true))
+        }
+    }
+
+    // A tap on a transcription notification opens that meeting (once setup and consent are done).
+    LaunchedEffect(openFolder) {
+        if (openFolder != null && preferences.storageTreeUri != null && preferences.consentAcknowledged) {
+            navController.navigate(Routes.playback(openFolder))
+            onFolderOpened()
         }
     }
 
@@ -96,20 +106,25 @@ fun AppNavigation(preferences: AppPreferences) {
                 onOpenMeeting = { navController.navigate(Routes.playback(it)) },
                 onNewRecording = { navController.goTo(Routes.RECORD) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                onOpenModels = { navController.navigate(Routes.MODELS) },
             )
         }
         composable(
             route = Routes.PLAYBACK,
             arguments = listOf(navArgument("folder") { type = NavType.StringType }),
         ) {
-            PlaybackScreen(onBack = { navController.popBackStack() })
+            PlaybackScreen(onBack = { navController.popBackStack() }, onOpenModels = { navController.navigate(Routes.MODELS) })
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(
                 preferences = preferences,
                 onChangeFolder = { navController.navigate(Routes.setup(change = true)) },
+                onOpenModels = { navController.navigate(Routes.MODELS) },
                 onBack = { navController.popBackStack() },
             )
+        }
+        composable(Routes.MODELS) {
+            ModelSettingsScreen(onBack = { navController.popBackStack() })
         }
     }
 }

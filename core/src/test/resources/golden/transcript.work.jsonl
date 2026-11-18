@@ -1,0 +1,5 @@
+{"t":"header","v":1,"modelId":"small-q5_1","modelSha256":"ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb","requestedLanguage":"auto","vad":false,"sampleRate":48000,"durationFrames":960000,"engineVersion":"1.9.5","pipeline":1,"startedAt":"2026-11-16T22:30:50+01:00"}
+{"t":"language","code":"de","confidence":0.97,"probes":[96000,384000,672000]}
+{"t":"window","fromFrame":0,"nextFrame":576000,"elapsedMs":8000,"segments":[{"startFrame":0,"endFrame":201600,"text":"Guten Morgen zusammen, wir fangen mit dem Rückblick an."},{"startFrame":201600,"endFrame":470400,"text":"Die Zahlen aus dem letzten Quartal sehen gut aus."}]}
+{"t":"window","fromFrame":576000,"nextFrame":960000,"elapsedMs":6200,"segments":[{"startFrame":576000,"endFrame":744000,"text":"Hier auf dem Whiteboard sieht man die neue Planung."},{"startFrame":744000,"endFrame":912000,"text":"Gibt es dazu Fragen?"}]}
+{"t":"end","segmentCount":4,"elapsedMsTotal":14200}

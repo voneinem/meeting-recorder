@@ -31,7 +31,9 @@ No photos were taken.
 
 ## Suggested follow-up tasks
 
-Transcription is not part of this folder yet. Useful tasks for an AI assistant, for example Claude Code, with this folder as input:
+No transcript has been created for this meeting yet.
+
+Useful tasks for an AI assistant, for example Claude Code, with this folder as input:
 
 1. **Summary**: "Summarize this meeting in 10 lines. Use the photos as visual context."
 2. **Minutes**: "Write meeting minutes with topics, decisions and open questions."

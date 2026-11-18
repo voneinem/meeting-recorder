@@ -3,7 +3,10 @@ package app.meetingrecorder.core.json
 import app.meetingrecorder.core.model.AudioInfo
 import app.meetingrecorder.core.model.ChannelLayout
 import app.meetingrecorder.core.model.MeetingMetadata
+import app.meetingrecorder.core.model.JobInfo
+import app.meetingrecorder.core.model.JobState
 import app.meetingrecorder.core.model.MeetingStatus
+import app.meetingrecorder.core.model.MeetingTranscription
 import app.meetingrecorder.core.time.Timeline
 import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
@@ -87,8 +90,50 @@ public object MeetingValidator {
             previousNumber = number
         }
 
+        meeting.transcription?.let { validateTranscription(it, ::fail) }
+
         return violations
     }
+
+    private val requestedLanguage = Regex("""^(auto|[a-z]{2,3})$""")
+    private val languageCode = Regex("""^[a-z]{2,3}$""")
+
+    /** The rules of contracts/meeting-transcription.schema.json. */
+    private fun validateTranscription(block: MeetingTranscription, fail: (String, String) -> Unit) {
+        block.transcript?.let { t ->
+            if (t.modelId.isEmpty()) fail("transcription", "transcript.modelId must not be empty")
+            if (t.modelName.isEmpty()) fail("transcription", "transcript.modelName must not be empty")
+            if (!requestedLanguage.matches(t.requestedLanguage)) {
+                fail("transcription", "transcript.requestedLanguage must be auto or a language code: ${t.requestedLanguage}")
+            }
+            if (!languageCode.matches(t.language)) {
+                fail("transcription", "transcript.language must be a language code: ${t.language}")
+            }
+            if (!isDateTime(t.completedAt)) fail("transcription", "transcript.completedAt is not an ISO-8601 date-time: ${t.completedAt}")
+            if (t.processingMs < 0) fail("transcription", "transcript.processingMs must be >= 0")
+            if (t.segmentCount < 0) fail("transcription", "transcript.segmentCount must be >= 0")
+        }
+        block.job?.let { validateJob(it, fail) }
+    }
+
+    private fun validateJob(job: JobInfo, fail: (String, String) -> Unit) {
+        if (job.modelId.isEmpty()) fail("transcription", "job.modelId must not be empty")
+        if (!requestedLanguage.matches(job.requestedLanguage)) {
+            fail("transcription", "job.requestedLanguage must be auto or a language code: ${job.requestedLanguage}")
+        }
+        if (!isDateTime(job.startedAt)) fail("transcription", "job.startedAt is not an ISO-8601 date-time: ${job.startedAt}")
+        if (job.state == JobState.FAILED && job.failureReason == null) {
+            fail("transcription", "job.failureReason is required when state is failed")
+        }
+    }
+
+    private fun isDateTime(text: String): Boolean =
+        try {
+            OffsetDateTime.parse(text)
+            true
+        } catch (_: DateTimeParseException) {
+            false
+        }
 
     private fun validateAudio(audio: AudioInfo, fail: (String, String) -> Unit) {
         if (audio.file != AudioInfo.AUDIO_FILE_NAME) fail("audio", "audio.file must be ${AudioInfo.AUDIO_FILE_NAME}")

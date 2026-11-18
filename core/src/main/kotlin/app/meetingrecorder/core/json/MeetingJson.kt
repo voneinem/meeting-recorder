@@ -18,6 +18,8 @@ public object MeetingJson {
         prettyPrintIndent = "  "
         encodeDefaults = true
         ignoreUnknownKeys = true
+        // An absent `transcription` block stays absent, so Phase 1 files re-encode unchanged.
+        explicitNulls = false
     }
 
     public fun encode(meeting: MeetingMetadata): String =

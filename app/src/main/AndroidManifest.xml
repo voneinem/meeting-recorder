@@ -2,16 +2,32 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Principle VI: exactly the permissions the features need. No INTERNET, no storage permissions. -->
+    <!-- Principle VI: exactly the permissions the features need. No storage permissions. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
 
+    <!-- Phase 2. INTERNET is used only for the explicit, user-initiated model download (package
+         app.meetingrecorder.models.download); network_security_config.xml restricts it to
+         huggingface.co and hf.co and forbids cleartext. verifyManifestPermissions enforces all of it. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Keeps the CPU running while a transcription or a download runs with the screen off. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Foreground service type of the model download (and of transcription before Android 15). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Foreground service type of transcription on Android 15 and newer. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING" />
+
     <!-- Added transitively by androidx.media3 (via CameraX); the app has no use for network state. -->
     <uses-permission
         android:name="android.permission.ACCESS_NETWORK_STATE"
+        tools:node="remove" />
+
+    <!-- Merged in by WorkManager; transcription is started by the user, never at boot. -->
+    <uses-permission
+        android:name="android.permission.RECEIVE_BOOT_COMPLETED"
         tools:node="remove" />
 
     <uses-feature
@@ -25,8 +41,16 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MeetingRecorder">
+        android:theme="@style/Theme.MeetingRecorder"
+        android:usesCleartextTraffic="false">
+
+        <!-- WorkManager's foreground service runs transcription and the model download. -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync|mediaProcessing"
+            tools:node="merge" />
 
         <service
             android:name=".recording.RecordingService"

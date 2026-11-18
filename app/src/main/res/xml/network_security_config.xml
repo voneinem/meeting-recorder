@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The only network use of the app is the model download (Principle I). Cleartext is off everywhere,
+     the base config has no trust anchors (TLS to any other host fails) and only huggingface.co and
+     hf.co, with subdomains, trust the system certificates. verifyManifestPermissions checks this file. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <!-- Empty on purpose: without this element the system CAs would be trusted for every host. -->
+        <trust-anchors />
+    </base-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">huggingface.co</domain>
+        <domain includeSubdomains="true">hf.co</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

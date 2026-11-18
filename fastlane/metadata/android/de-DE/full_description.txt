@@ -1,7 +1,7 @@
 Meeting Recorder nimmt den Ton einer Besprechung auf und lässt dich währenddessen Fotos von Whiteboards oder Folien machen. Jedes Foto steht genau an der Stelle der Aufnahme, an der du es gemacht hast.
 
 <b>Alles bleibt auf deinem Telefon</b>
-Kein Netzwerkzugriff, kein Tracking, keine Konten, keine Cloud. Die App hat gar keine INTERNET-Berechtigung.
+Kein Tracking, keine Konten, keine Cloud. Deine Besprechungen verlassen das Telefon nie. Die App lädt nur ein Spracherkennungsmodell herunter, und nur wenn du auf „Herunterladen“ tippst. Die Transkription läuft auf deinem Telefon.
 
 <b>Aufnahme</b>
 • Eingebautes Mikrofon oder externes USB-Mikrofon, Mono oder Stereo (Stereo, wenn das Mikrofon zwei Kanäle liefert)
@@ -13,10 +13,13 @@ Kein Netzwerkzugriff, kein Tracking, keine Konten, keine Cloud. Die App hat gar 
 <b>Fotos</b>
 Mit einem Tipp während der Aufnahme fotografieren. Bei der Wiedergabe springst du durch Antippen eines Fotos zu seinem Zeitpunkt.
 
+<b>Transkription</b>
+Eine Besprechung wird auf dem Telefon transkribiert, auch bei ausgeschaltetem Bildschirm. Du wählst ein Spracherkennungsmodell (einmal geladen oder aus einer Datei importiert) und die Sprache (automatisch, Deutsch, Englisch). Das Ergebnis wird im Besprechungsordner gespeichert (transcript.json und transcript.md, mit den Fotos im Text). Tippe auf einen Satz, um das Audio ab dort abzuspielen.
+
 <b>Offene Dateien</b>
 Jede Besprechung ist ein gewöhnlicher Ordner: audio.wav, ein Ordner photos, meeting.json mit allen Angaben und eine CLAUDE.md, die das Format erklärt. Du kannst ihn ohne die App lesen oder einem KI-Assistenten wie Claude Code geben, um eine Zusammenfassung, ein Protokoll oder Aufgaben zu erhalten.
 
 <b>Bitte beachten</b>
 Besprechungen werden unverschlüsselt in dem Ordner gespeichert, den du auswählst. Wird dieser Ordner von einer anderen App synchronisiert, kopiert diese App die Besprechungen von deinem Telefon. Stelle immer sicher, dass alle aufgenommenen Personen zugestimmt haben.
 
-Freie Software unter der GPL-3.0-or-later. Transkription gehört nicht zu dieser Version.
+Freie Software unter der GPL-3.0-or-later.

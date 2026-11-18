@@ -2,17 +2,19 @@ package app.meetingrecorder.storage
 
 import android.os.ParcelFileDescriptor
 import android.system.Os
-import app.meetingrecorder.core.wav.SeekableStore
-import java.io.Closeable
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
 import java.nio.ByteBuffer
 
 /**
  * [SeekableStore] over a file descriptor opened with mode "rw" (research R-1, R-8). Reads and writes
  * are positional, so header updates at offset 0 never disturb appending audio data.
  */
-class ParcelSeekableStore(private val descriptor: ParcelFileDescriptor) : SeekableStore, Closeable {
+class ParcelSeekableStore(
+    private val descriptor: ParcelFileDescriptor,
+    private val writable: Boolean = true,
+) : FileStore {
     private val input = FileInputStream(descriptor.fileDescriptor)
     private val output = FileOutputStream(descriptor.fileDescriptor)
 
@@ -22,6 +24,7 @@ class ParcelSeekableStore(private val descriptor: ParcelFileDescriptor) : Seekab
         input.channel.read(ByteBuffer.wrap(buffer, bufferOffset, length), offset)
 
     override fun writeAt(offset: Long, buffer: ByteArray, bufferOffset: Int, length: Int) {
+        if (!writable) throw IOException("the file was opened read-only")
         val bytes = ByteBuffer.wrap(buffer, bufferOffset, length)
         var position = offset
         while (bytes.hasRemaining()) {
@@ -30,6 +33,7 @@ class ParcelSeekableStore(private val descriptor: ParcelFileDescriptor) : Seekab
     }
 
     override fun truncate(length: Long) {
+        if (!writable) throw IOException("the file was opened read-only")
         output.channel.truncate(length)
     }
 

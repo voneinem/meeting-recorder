@@ -1,7 +1,7 @@
 Meeting Recorder records the audio of a meeting and lets you take photos of whiteboards or slides while it runs. Every photo is placed at the exact moment of the recording where you took it.
 
 <b>Everything stays on your phone</b>
-No network access, no tracking, no accounts, no cloud. The app has no INTERNET permission at all.
+No tracking, no accounts, no cloud. Your meetings never leave the phone. The only thing the app ever downloads is a speech recognition model, and only when you tap Download. Transcription runs on your phone.
 
 <b>Recording</b>
 • Built-in microphone or an external USB microphone, mono or stereo (stereo when the microphone delivers two channels)
@@ -13,10 +13,13 @@ No network access, no tracking, no accounts, no cloud. The app has no INTERNET p
 <b>Photos</b>
 Take photos with one tap during the recording. During playback, tap a photo to jump to its moment.
 
+<b>Transcription</b>
+A meeting is transcribed on the phone, even with the screen off. You choose a speech recognition model (downloaded once or imported from a file) and the language (automatic, German, English). The result is saved in the meeting folder (transcript.json and transcript.md, with the photos placed in the text). Tap a sentence to play the audio from there.
+
 <b>Open files</b>
 Each meeting is a plain folder: audio.wav, a photos folder, meeting.json with all details and a CLAUDE.md that explains the format. You can read it without the app, or give the folder to an AI assistant such as Claude Code to get a summary, minutes or action items.
 
 <b>Please note</b>
 Meetings are stored unencrypted in the folder you choose. If that folder is synchronized by another app, the meetings are copied off your phone by that app. Always make sure everyone who is recorded has agreed to it.
 
-Free software under the GPL-3.0-or-later license. Transcription is not part of this version.
+Free software under the GPL-3.0-or-later license.

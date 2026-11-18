@@ -8,6 +8,8 @@ plugins {
 android {
     namespace = "app.meetingrecorder"
     compileSdk = libs.versions.compile.sdk.get().toInt()
+    // The same NDK as :whisper: AGP strips the native libraries of the release APK with its tools.
+    ndkVersion = "29.0.14206865"
 
     defaultConfig {
         applicationId = "app.meetingrecorder"
@@ -21,6 +23,16 @@ android {
     buildFeatures {
         compose = true
         aidl = true
+        buildConfig = true
+    }
+
+    packaging {
+        jniLibs {
+            // The ggml CPU variant libraries must be extracted to nativeLibraryDir so dlopen can find them.
+            useLegacyPackaging = true
+            // Since 1.9 the engine also builds a second speech library that nothing here uses.
+            excludes += "**/libparakeet.so"
+        }
     }
 
     compileOptions {
@@ -54,6 +66,8 @@ android {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":whisper"))
+    implementation(libs.androidx.work.runtime)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.android)

@@ -91,6 +91,59 @@ public data class Photo(
 )
 
 @Serializable
+public enum class JobState {
+    @SerialName("in-progress") IN_PROGRESS,
+    @SerialName("failed") FAILED,
+}
+
+/** Why a transcription job did not finish (contracts/meeting-transcription.schema.json). */
+@Serializable
+public enum class FailureReason {
+    @SerialName("interrupted") INTERRUPTED,
+    @SerialName("recording-started") RECORDING_STARTED,
+    @SerialName("model-missing") MODEL_MISSING,
+    @SerialName("model-invalid") MODEL_INVALID,
+    @SerialName("out-of-memory") OUT_OF_MEMORY,
+    @SerialName("storage-full") STORAGE_FULL,
+    @SerialName("audio-unreadable") AUDIO_UNREADABLE,
+    @SerialName("error") ERROR,
+}
+
+/** The transcript that is committed in the folder. [requestedLanguage] is `auto` or a language code. */
+@Serializable
+public data class TranscriptInfo(
+    val modelId: String,
+    val modelName: String,
+    val requestedLanguage: String,
+    val language: String,
+    /** ISO-8601 date-time with UTC offset. */
+    val completedAt: String,
+    val processingMs: Long,
+    val segmentCount: Int,
+)
+
+/** The most recent transcription run that is running or did not finish. */
+@Serializable
+public data class JobInfo(
+    val state: JobState,
+    val modelId: String,
+    val requestedLanguage: String,
+    val startedAt: String,
+    val failureReason: FailureReason? = null,
+    /** Short English technical detail for people reading the folder. */
+    val failureMessage: String? = null,
+    /** True when `transcript.work.jsonl` holds a usable checkpoint. */
+    val resumable: Boolean = false,
+)
+
+/** The optional `transcription` block of `meeting.json`. The folder content wins over it. */
+@Serializable
+public data class MeetingTranscription(
+    val transcript: TranscriptInfo? = null,
+    val job: JobInfo? = null,
+)
+
+@Serializable
 public data class MeetingMetadata(
     val schemaVersion: Int = SCHEMA_VERSION,
     val title: String,
@@ -103,6 +156,8 @@ public data class MeetingMetadata(
     val sourceSwitches: List<SourceSwitch> = emptyList(),
     val photos: List<Photo> = emptyList(),
     val dropouts: List<Dropout> = emptyList(),
+    /** Phase 2. `null` (and then absent from the file) for a meeting that was never transcribed. */
+    val transcription: MeetingTranscription? = null,
 ) {
     public companion object {
         public const val SCHEMA_VERSION: Int = 1

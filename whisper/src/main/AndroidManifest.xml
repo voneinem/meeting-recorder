@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Library without components, permissions or resources: only the native engine and its bridge. -->
+    <application />
+</manifest>

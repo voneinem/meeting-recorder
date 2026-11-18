@@ -120,6 +120,51 @@ public object MeetingEditor {
     public fun markRecovered(meeting: MeetingMetadata, durationFrames: Long): MeetingMetadata =
         setDuration(meeting, durationFrames).copy(status = MeetingStatus.RECOVERED)
 
+    // --- Phase 2: the `transcription` block ---
+
+    /**
+     * Records that a transcription run started. A committed `transcript` stays as it is (a
+     * re-transcription keeps the old transcript until the new one is committed); an older `job` is replaced.
+     */
+    public fun startJob(
+        meeting: MeetingMetadata,
+        modelId: String,
+        requestedLanguage: String,
+        startedAt: OffsetDateTime,
+    ): MeetingMetadata {
+        val job = JobInfo(
+            state = JobState.IN_PROGRESS,
+            modelId = modelId,
+            requestedLanguage = requestedLanguage,
+            startedAt = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(startedAt),
+        )
+        return meeting.copy(transcription = (meeting.transcription ?: MeetingTranscription()).copy(job = job))
+    }
+
+    /** Marks the existing job as failed. [resumable] is true when the work file holds a usable checkpoint. */
+    public fun failJob(
+        meeting: MeetingMetadata,
+        reason: FailureReason,
+        message: String?,
+        resumable: Boolean,
+    ): MeetingMetadata {
+        val block = meeting.transcription
+        val job = requireNotNull(block?.job) { "there is no transcription job to fail" }
+        val failed = job.copy(state = JobState.FAILED, failureReason = reason, failureMessage = message, resumable = resumable)
+        return meeting.copy(transcription = block.copy(job = failed))
+    }
+
+    /** Removes only the job. A block that is left empty is dropped so that the file stays as in Phase 1. */
+    public fun clearJob(meeting: MeetingMetadata): MeetingMetadata {
+        val block = meeting.transcription ?: return meeting
+        val remaining = block.copy(job = null)
+        return meeting.copy(transcription = remaining.takeIf { it.transcript != null })
+    }
+
+    /** Sets the committed transcript and removes the job. */
+    public fun commitTranscript(meeting: MeetingMetadata, transcript: TranscriptInfo): MeetingMetadata =
+        meeting.copy(transcription = MeetingTranscription(transcript = transcript, job = null))
+
     private fun toSource(id: Int, info: SourceInfo): Source = Source(
         id = id,
         name = info.name,
