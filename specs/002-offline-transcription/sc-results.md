@@ -2,7 +2,7 @@
 
 Written 2026-11-18, after the device scenarios that could be driven and the owner's decision to skip or defer the rest.
 "Met" means measured on the reference phone (Gigaset E940, Android 14) or, where stated, on the API 34 and 35 emulators.
-Nothing here is rounded up: a criterion with a gap stays a gap.
+Nothing here is rounded up: a criterion with a gap stays a gap. The owner accepted these gaps on 2026-11-18 so that T181 could be ticked; the gaps themselves are unchanged.
 
 | Criterion | Status | Evidence | Gap |
 |---|---|---|---|
