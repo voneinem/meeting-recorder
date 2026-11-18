@@ -27,3 +27,16 @@ Thumbs.db
 *.tmp
 *.log
 .env*
+
+# Transcription spike: recordings, downloaded models and results may contain confidential content
+spike/audio/
+spike/models/
+spike/out/
+build/spike-*/
+
+# Native build output of :whisper
+.cxx/
+
+# Python
+__pycache__/
+*.pyc

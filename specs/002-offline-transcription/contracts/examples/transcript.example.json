@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-16T22:31:08+01:00",
+  "audio": {
+    "sampleRate": 48000,
+    "durationFrames": 960000
+  },
+  "model": {
+    "id": "small-q5_1",
+    "name": "Small (q5_1)",
+    "sha256": "ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb",
+    "origin": "catalog"
+  },
+  "language": {
+    "requested": "auto",
+    "used": "de",
+    "detected": true,
+    "confidence": 0.97
+  },
+  "engine": {
+    "name": "whisper.cpp",
+    "version": "1.9.5"
+  },
+  "processing": {
+    "durationMs": 14200,
+    "vad": false
+  },
+  "segments": [
+    { "id": 0, "startFrame": 0, "endFrame": 201600, "startMs": 0, "endMs": 4200, "text": "Guten Morgen zusammen, wir fangen mit dem Rückblick an.", "speaker": null },
+    { "id": 1, "startFrame": 201600, "endFrame": 470400, "startMs": 4200, "endMs": 9800, "text": "Die Zahlen aus dem letzten Quartal sehen gut aus.", "speaker": null },
+    { "id": 2, "startFrame": 576000, "endFrame": 744000, "startMs": 12000, "endMs": 15500, "text": "Hier auf dem Whiteboard sieht man die neue Planung.", "speaker": null },
+    { "id": 3, "startFrame": 744000, "endFrame": 912000, "startMs": 15500, "endMs": 19000, "text": "Gibt es dazu Fragen?", "speaker": null }
+  ]
+}

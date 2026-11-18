@@ -43,10 +43,123 @@
     "dropouts": {
       "type": "array",
       "items": { "$ref": "#/$defs/dropout" }
-    }
+    },
+    "transcription": { "$ref": "#/$defs/transcription" }
   },
   "additionalProperties": true,
   "$defs": {
+    "transcription": {
+      "description": "Optional Phase 2 block. Meetings without it mean \"no transcription\". `transcript` describes the committed transcript, `job` the most recent run that is running or did not finish; both can exist at once (re-transcription). The folder content wins over this block. The standalone fragment is specs/002-offline-transcription/contracts/meeting-transcription.schema.json; SchemaFragmentTest keeps both in step.",
+      "type": "object",
+      "properties": {
+        "transcript": {
+          "type": "object",
+          "required": [
+            "modelId",
+            "modelName",
+            "requestedLanguage",
+            "language",
+            "completedAt",
+            "processingMs",
+            "segmentCount"
+          ],
+          "properties": {
+            "modelId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "modelName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requestedLanguage": {
+              "type": "string",
+              "pattern": "^(auto|[a-z]{2,3})$"
+            },
+            "language": {
+              "type": "string",
+              "pattern": "^[a-z]{2,3}$"
+            },
+            "completedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "processingMs": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "segmentCount": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": true
+        },
+        "job": {
+          "type": "object",
+          "required": [
+            "state",
+            "modelId",
+            "requestedLanguage",
+            "startedAt"
+          ],
+          "properties": {
+            "state": {
+              "enum": [
+                "in-progress",
+                "failed"
+              ]
+            },
+            "modelId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requestedLanguage": {
+              "type": "string",
+              "pattern": "^(auto|[a-z]{2,3})$"
+            },
+            "startedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "failureReason": {
+              "enum": [
+                "interrupted",
+                "recording-started",
+                "model-missing",
+                "model-invalid",
+                "out-of-memory",
+                "storage-full",
+                "audio-unreadable",
+                "error"
+              ]
+            },
+            "failureMessage": {
+              "type": "string",
+              "description": "Short English technical detail for people reading the folder; the UI shows a localized text for failureReason."
+            },
+            "resumable": {
+              "type": "boolean",
+              "description": "True when transcript.work.jsonl holds a usable checkpoint."
+            }
+          },
+          "if": {
+            "properties": {
+              "state": {
+                "const": "failed"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "failureReason"
+            ]
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
     "audio": {
       "type": "object",
       "required": [

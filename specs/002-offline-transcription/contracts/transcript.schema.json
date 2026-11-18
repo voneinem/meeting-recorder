@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://meetingrecorder.invalid/schema/transcript-1.json",
+  "title": "Meeting Recorder transcript.json, schemaVersion 1",
+  "description": "Machine-readable transcript of one meeting. Every position is a sample-frame index into audio.wav (the single timeline); the *Ms values are derived (ms = frame * 1000 / sampleRate, rounded down). A file under this name is always complete: partial results live in transcript.work.jsonl.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "audio",
+    "model",
+    "language",
+    "engine",
+    "segments"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Wall-clock time the transcript was completed, with UTC offset. Informational only."
+    },
+    "audio": {
+      "type": "object",
+      "required": ["sampleRate", "durationFrames"],
+      "properties": {
+        "sampleRate": { "type": "integer", "minimum": 1 },
+        "durationFrames": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "model": {
+      "type": "object",
+      "required": ["id", "name", "sha256", "origin"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "description": "Catalog id, or imported-<first 12 hex of sha256> for an imported file." },
+        "name": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "origin": { "enum": ["catalog", "imported"] }
+      },
+      "additionalProperties": true
+    },
+    "language": {
+      "type": "object",
+      "required": ["requested", "used", "detected"],
+      "properties": {
+        "requested": { "type": "string", "pattern": "^(auto|[a-z]{2,3})$", "description": "What the user chose: auto or a language code." },
+        "used": { "type": "string", "pattern": "^[a-z]{2,3}$", "description": "The single language the whole transcript was decoded in." },
+        "detected": { "type": "boolean", "description": "True when requested is auto and used was found by language detection." },
+        "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": true
+    },
+    "engine": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "const": "whisper.cpp" },
+        "version": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "processing": {
+      "type": "object",
+      "description": "Informational. durationMs is the compute time summed over all sessions of the job (resume included).",
+      "properties": {
+        "durationMs": { "type": "integer", "minimum": 0 },
+        "vad": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "segments": {
+      "type": "array",
+      "description": "Ordered by startFrame (non-decreasing). Empty when the audio contains no speech.",
+      "items": { "$ref": "#/$defs/segment" }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "segment": {
+      "type": "object",
+      "required": ["id", "startFrame", "endFrame", "startMs", "endMs", "text", "speaker"],
+      "properties": {
+        "id": { "type": "integer", "minimum": 0, "description": "0-based, consecutive, stable within one file." },
+        "startFrame": { "type": "integer", "minimum": 0 },
+        "endFrame": { "type": "integer", "minimum": 0, "description": "At least startFrame, at most audio.durationFrames." },
+        "startMs": { "type": "integer", "minimum": 0 },
+        "endMs": { "type": "integer", "minimum": 0 },
+        "text": { "type": "string", "minLength": 1, "description": "Trimmed, never empty." },
+        "speaker": { "type": ["string", "null"], "description": "Always null in schemaVersion 1 of this phase; filled by the speaker phase." }
+      },
+      "additionalProperties": true
+    }
+  }
+}

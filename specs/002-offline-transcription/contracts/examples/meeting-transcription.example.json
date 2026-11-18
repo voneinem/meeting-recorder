@@ -1,0 +1,20 @@
+{
+  "transcript": {
+    "modelId": "small-q5_1",
+    "modelName": "Small (q5_1)",
+    "requestedLanguage": "auto",
+    "language": "de",
+    "completedAt": "2026-11-16T22:31:08+01:00",
+    "processingMs": 14200,
+    "segmentCount": 4
+  },
+  "job": {
+    "state": "failed",
+    "modelId": "medium-q5_0",
+    "requestedLanguage": "de",
+    "startedAt": "2026-11-16T22:40:00+01:00",
+    "failureReason": "recording-started",
+    "failureMessage": "stopped because a recording was started",
+    "resumable": true
+  }
+}

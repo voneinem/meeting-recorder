@@ -126,6 +126,8 @@ Each scenario maps to a user story in [spec.md](spec.md).
 1. Enable airplane mode; run S1, S4 and S5 fully.
 2. Inspect the merged manifest: no `INTERNET` permission.
    `aapt dump permissions app-debug.apk` must list exactly the allow-listed permissions.
+   *Phase 2 note: from Phase 2 on `INTERNET` is present by design for the explicit model download, and this
+   step checks the Phase 2 allow-list instead (see `specs/002-offline-transcription/research.md` R-11).*
 
 ### S9: Localization (FR-033)
 
