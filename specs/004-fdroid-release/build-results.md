@@ -158,22 +158,30 @@ and the tag pushed (steps 0 and 1): they are the pending final dry run (T044). (
 real-fork property: in the scratch clone the file already existed, which is an artifact of the scratch tooling. No
 other missing step or wrong command was found; the package was corrected for (1).
 
+## Final dry run against GitHub with the real recipe (T044), 2026-11-19
+
+After the owner approved it, `main` and the tag `v0.1.0` were pushed and the repository was made public (HTTP 200 on the
+public page; anonymous `git ls-remote` shows `refs/heads/main` at `205432c` and `refs/tags/v0.1.0^{}` at `cf6f938`).
+With the **real** recipe copy (`Repo: https://github.com/voneinem/meeting-recorder.git`, commit
+`cf6f93887c9f01bdea13158f7690d57c3d2c99ad`) and F-Droid's tooling:
+
+| Step | Result |
+|------|--------|
+| `scripts/fdroid/lint.sh <recipe>` | exit 0, no rewrite, no warning |
+| `scripts/fdroid/checkupdates.sh <recipe>` | exit 0, recipe unchanged; the submodule was fetched from GitHub at `d1be6fde11ac6e0407606b4e42fe72d34add8037`; tag `v0.1.0` resolved to `cf6f93887c9f01bdea13158f7690d57c3d2c99ad` |
+| `scripts/fdroid/build.sh <recipe>` (`buildserver-trixie`) | exit 0, `Successfully built app.meetingrecorder:1 from cf6f93887c9f01bdea13158f7690d57c3d2c99ad`, `BUILD SUCCESSFUL in 2m 31s`; APK 39,370,114 bytes, SHA-256 `159773be74c11a7fcb738928db4eae2c3865891c61d2deb1568f95184381ebde`, identical to all earlier builds |
+
 ## Open items
 
 Everything that remains is for the owner, in this order (details and options in `submission.md`):
 
-1. **Decide whether the repository becomes public** (`submission.md` 1.0). It is private now, so F-Droid cannot clone it,
-   and the final dry run (T044) cannot run. Making it public also publishes the history, including the earlier
-   commits' author address.
-2. **Decide the three points of `submission.md` 1.1 to 1.3**: Quality point 6 (the project is four days old; F-Droid asks
+1. ~~Decide whether the repository becomes public.~~ **Done 2026-11-19**: made public by the assistant on the owner's explicit go-ahead (the history, including the earlier commits' author address, is public).
+2. ~~Decide the three points of `submission.md` 1.1 to 1.3~~ **Decided 2026-11-19**: send now and state the age plainly, F-Droid signs, one APK with both ABIs. (Context:: Quality point 6 (the project is four days old; F-Droid asks
    for three months of active development unless an exception applies: about 2027-02-15 by age), reproducible builds
    with your own signature or F-Droid's signature (one-way at first publication; the app is technically ready), and the
-   APK size / ABI split (one 39.4 MB APK as decided).
-3. **Approve a documentation commit** with the recipe's commit hash, `build-results.md`, `submission.md`,
-   `sc-results.md` and the task ticks (T038). The working tree has these changes uncommitted; the release commit and
-   the tag `v0.1.0` do not contain them.
-4. **Push** `main` and the tag `v0.1.0`; then run the final dry run against GitHub (T044:
-   `scripts/fdroid/lint.sh`, `checkupdates.sh`, `build.sh` with the real recipe).
+   APK size / ABI split (one 39.4 MB APK).)
+3. ~~Approve a documentation commit.~~ **Done 2026-11-19**: `205432c`; the tag stays on the release commit `cf6f938`. This record of the dry run is a later documentation change.
+4. ~~Push `main` and the tag, final dry run (T044).~~ **Done 2026-11-19**, see above.
 5. **Write the two marked passages** of the merge request text (why you wrote the app; the project's age) and the
    reproducible-builds reason.
 6. **GitLab account, fork of `fdroiddata`, push of the branch `app.meetingrecorder`, the merge request, and the

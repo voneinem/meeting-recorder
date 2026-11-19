@@ -23,7 +23,7 @@ The sections below keep the options and reasoning behind these decisions.
 
 ## 1. Read this before you send: a blocker and three points that need your decision
 
-The dry-read of this package found one blocker, and the F-Droid merge request template and policy raised three
+The dry-read of this package found one blocker (resolved on 2026-11-19: the repository is public), and the F-Droid merge request template and policy raised three
 things that this phase could not decide for you.
 
 ### 1.0 Blocker: the source repository is private
@@ -225,7 +225,8 @@ Nothing in this phase pushed, created an account or opened a merge request. Thes
 3. Push the branch `main` and the tag `v0.1.0` to `https://github.com/voneinem/meeting-recorder` (section 3, step 1).
 4. Create the GitLab account, fork `fdroiddata`, push the branch `app.meetingrecorder`, open the merge request,
    answer the review.
-5. **Final dry run against GitHub (task T044, pending)**: after step 3, run `scripts/fdroid/lint.sh`,
+5. **Final dry run against GitHub (task T044, done 2026-11-19)**: after the repository was made public and the tag pushed, `scripts/fdroid/lint.sh`,
+   `scripts/fdroid/checkupdates.sh` and `scripts/fdroid/build.sh` were run with the real recipe (`build-results.md`); to repeat it, run `scripts/fdroid/lint.sh`,
    `scripts/fdroid/checkupdates.sh` and `scripts/fdroid/build.sh` with the **real** recipe copy (its `Repo:` is the
    GitHub address). It could not run here because the tag is not on GitHub yet; the same three steps passed against a
    scratch clone of the tag with the same commit.
