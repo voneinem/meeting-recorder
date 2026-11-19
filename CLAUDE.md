@@ -2,7 +2,8 @@
 
 Android app (Kotlin, Jetpack Compose, Material 3, minSdk 30) that records meeting audio and photos
 into open meeting folders and transcribes them on the device. Specification, plan, contracts and tasks
-are in `specs/001-meeting-recording-mvp/` (Phase 1) and `specs/002-offline-transcription/` (Phase 2); the
+are in `specs/001-meeting-recording-mvp/` (Phase 1), `specs/002-offline-transcription/` (Phase 2) and
+`specs/003-fossify-style/` (the visual style of Phase 3); the
 constitution is `.specify/memory/constitution.md`.
 
 ## Build and test
@@ -46,6 +47,12 @@ constitution is `.specify/memory/constitution.md`.
   strings are localized: `values/strings.xml` (English) and `values-de/strings.xml` (German). No
   hard-coded UI strings (a unit test and lint enforce it). `meeting.json` and the generated
   `CLAUDE.md` stay English.
+- **Theme**: the colors are the fixed palette of `ui/theme/Palette.kt` (light and dark, never wallpaper-based
+  dynamic color). No hex value or `Color(...)` anywhere else, no raw `Card`, `Button`, `OutlinedButton` or
+  `TextButton` outside `ui/components/` (use `AppCard`, `AppButton`, `AppOutlinedButton`, `AppTextButton`), status
+  colors (`MaterialTheme.statusColors`) only together with text, no font files. A new color pair goes into
+  `PaletteContrastTest`. `ThemeSourceRulesTest` and `ColorSchemeRolesTest` enforce it; the rules are in
+  `specs/003-fossify-style/contracts/theme-contract.md`.
 - **Single timeline**: positions are sample frames (`atFrame`) counted by the WAV writer; `atMs` is
   derived. Never use wall-clock time for positions.
 - **Minimal permissions**: the manifest allow-list is checked by `verifyManifestPermissions`. `INTERNET`

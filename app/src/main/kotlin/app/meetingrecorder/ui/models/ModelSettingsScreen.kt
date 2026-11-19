@@ -13,13 +13,9 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,6 +28,11 @@ import app.meetingrecorder.R
 import app.meetingrecorder.core.models.ModelInstallState
 import app.meetingrecorder.core.models.ModelLanguages
 import app.meetingrecorder.core.models.TransferKind
+import app.meetingrecorder.ui.components.AppCard
+import app.meetingrecorder.ui.components.AppButton
+import app.meetingrecorder.ui.components.AppOutlinedButton
+import app.meetingrecorder.ui.components.AppTextButton
+import app.meetingrecorder.ui.theme.statusColors
 
 /**
  * The model list (FR-001 to FR-011): name, size, languages, note, license and state of every model, a
@@ -60,14 +61,14 @@ fun ModelSettingsScreen(onBack: () -> Unit, viewModel: ModelViewModel = viewMode
 
         state.message?.let { message ->
             val text = message.argument?.let { stringResource(message.resource, it) } ?: stringResource(message.resource)
-            Card(modifier = Modifier.fillMaxWidth()) {
+            AppCard(modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(text = text, modifier = Modifier.weight(1f))
-                    TextButton(onClick = viewModel::messageShown) { Text(text = stringResource(R.string.action_ok)) }
+                    AppTextButton(onClick = viewModel::messageShown) { Text(text = stringResource(R.string.action_ok)) }
                 }
             }
         }
-        if (state.recording) Text(text = stringResource(R.string.model_recording_in_progress), color = MaterialTheme.colorScheme.error)
+        if (state.recording) Text(text = stringResource(R.string.model_recording_in_progress), color = MaterialTheme.statusColors.warning.foreground)
 
         if (state.rows.isEmpty()) Text(text = stringResource(R.string.models_empty))
         state.rows.forEach { row ->
@@ -78,16 +79,16 @@ fun ModelSettingsScreen(onBack: () -> Unit, viewModel: ModelViewModel = viewMode
         if (importing != null) {
             Text(text = stringResource(R.string.model_state_importing, importing))
             LinearProgressIndicator(progress = { importing / PERCENT }, modifier = Modifier.fillMaxWidth())
-            OutlinedButton(onClick = viewModel::cancelImport, modifier = Modifier.fillMaxWidth()) {
+            AppOutlinedButton(onClick = viewModel::cancelImport, modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.action_cancel))
             }
         } else {
-            OutlinedButton(onClick = { picker.launch(arrayOf("*/*")) }, enabled = !state.recording, modifier = Modifier.fillMaxWidth()) {
+            AppOutlinedButton(onClick = { picker.launch(arrayOf("*/*")) }, enabled = !state.recording, modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.model_action_import))
             }
         }
 
-        TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text(text = stringResource(R.string.action_back)) }
+        AppTextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text(text = stringResource(R.string.action_back)) }
     }
 
     state.confirmDownload?.let { row ->
@@ -106,8 +107,8 @@ fun ModelSettingsScreen(onBack: () -> Unit, viewModel: ModelViewModel = viewMode
                     ),
                 )
             },
-            confirmButton = { TextButton(onClick = viewModel::confirmDownload) { Text(text = stringResource(R.string.model_action_download)) } },
-            dismissButton = { TextButton(onClick = viewModel::dismissDialogs) { Text(text = stringResource(R.string.action_cancel)) } },
+            confirmButton = { AppTextButton(onClick = viewModel::confirmDownload) { Text(text = stringResource(R.string.model_action_download)) } },
+            dismissButton = { AppTextButton(onClick = viewModel::dismissDialogs) { Text(text = stringResource(R.string.action_cancel)) } },
         )
     }
     state.confirmDelete?.let { row ->
@@ -115,15 +116,15 @@ fun ModelSettingsScreen(onBack: () -> Unit, viewModel: ModelViewModel = viewMode
             onDismissRequest = viewModel::dismissDialogs,
             title = { Text(text = stringResource(R.string.model_delete_title)) },
             text = { Text(text = stringResource(R.string.model_delete_message, row.name)) },
-            confirmButton = { TextButton(onClick = viewModel::confirmDelete) { Text(text = stringResource(R.string.action_delete)) } },
-            dismissButton = { TextButton(onClick = viewModel::dismissDialogs) { Text(text = stringResource(R.string.action_cancel)) } },
+            confirmButton = { AppTextButton(onClick = viewModel::confirmDelete) { Text(text = stringResource(R.string.action_delete)) } },
+            dismissButton = { AppTextButton(onClick = viewModel::dismissDialogs) { Text(text = stringResource(R.string.action_cancel)) } },
         )
     }
 }
 
 @Composable
 private fun ModelCard(row: ModelRow, recording: Boolean, viewModel: ModelViewModel, size: String) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    AppCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(text = row.name, style = MaterialTheme.typography.titleMedium)
             if (row.recommended) Text(text = stringResource(R.string.model_recommended), style = MaterialTheme.typography.labelMedium)
@@ -143,7 +144,7 @@ private fun ModelCard(row: ModelRow, recording: Boolean, viewModel: ModelViewMod
 @Composable
 private fun ModelActions(row: ModelRow, recording: Boolean, viewModel: ModelViewModel) {
     when (val state = row.state) {
-        ModelInstallState.NotInstalled -> Button(
+        ModelInstallState.NotInstalled -> AppButton(
             onClick = { viewModel.askDownload(row) },
             enabled = !recording && row.entry != null,
             modifier = Modifier.fillMaxWidth(),
@@ -153,30 +154,30 @@ private fun ModelActions(row: ModelRow, recording: Boolean, viewModel: ModelView
             Text(text = stringResource(R.string.model_state_downloading, percent))
             LinearProgressIndicator(progress = { percent / PERCENT }, modifier = Modifier.fillMaxWidth())
             if (state.kind == TransferKind.DOWNLOAD) {
-                OutlinedButton(onClick = { viewModel.cancel(row) }, modifier = Modifier.fillMaxWidth()) {
+                AppOutlinedButton(onClick = { viewModel.cancel(row) }, modifier = Modifier.fillMaxWidth()) {
                     Text(text = stringResource(R.string.action_cancel))
                 }
             }
         }
         is ModelInstallState.Paused -> {
             Text(text = stringResource(R.string.model_state_paused, percentOf(state.bytesDone, state.total)))
-            Button(onClick = { viewModel.resume(row) }, enabled = !recording, modifier = Modifier.fillMaxWidth()) {
+            AppButton(onClick = { viewModel.resume(row) }, enabled = !recording, modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.model_action_resume_download))
             }
-            OutlinedButton(onClick = { viewModel.cancel(row) }, modifier = Modifier.fillMaxWidth()) {
+            AppOutlinedButton(onClick = { viewModel.cancel(row) }, modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.model_action_delete_partial))
             }
         }
         ModelInstallState.Verifying -> Text(text = stringResource(R.string.model_state_verifying))
         ModelInstallState.Installed -> {
             Text(text = stringResource(R.string.model_state_installed), style = MaterialTheme.typography.labelLarge)
-            OutlinedButton(onClick = { viewModel.askDelete(row) }, modifier = Modifier.fillMaxWidth()) {
+            AppOutlinedButton(onClick = { viewModel.askDelete(row) }, modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.action_delete))
             }
         }
         is ModelInstallState.Failed -> {
             Text(text = stringResource(ModelViewModel.failureText(state.reason)), color = MaterialTheme.colorScheme.error)
-            OutlinedButton(onClick = { viewModel.dismissFailure(row) }, modifier = Modifier.fillMaxWidth()) {
+            AppOutlinedButton(onClick = { viewModel.dismissFailure(row) }, modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.action_ok))
             }
         }

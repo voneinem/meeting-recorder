@@ -15,6 +15,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.meetingrecorder.core.level.ChannelLevel
 import app.meetingrecorder.core.level.LevelMeter
+import app.meetingrecorder.ui.theme.statusColors
 
 /** A horizontal bar for the level of one channel: empty at the floor value, full at 0 dBFS. */
 @Composable
@@ -26,6 +27,9 @@ fun LevelMeterBar(level: ChannelLevel, description: String, modifier: Modifier =
         }
         LinearProgressIndicator(
             progress = { fraction },
+            color = MaterialTheme.statusColors.success.foreground,
+            // The empty part of the meter must be visible against the page (3:1), like the seek bar's track.
+            trackColor = MaterialTheme.colorScheme.outline,
             modifier = Modifier
                 .weight(1f)
                 .height(12.dp)

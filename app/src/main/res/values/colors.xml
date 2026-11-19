@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Copies of Palette.kt tokens for places that cannot read Kotlin; PaletteContrastTest keeps them in step. -->
+    <color name="window_background">#FBFCF8</color>
+    <color name="notification_accent">#216E39</color>
+</resources>

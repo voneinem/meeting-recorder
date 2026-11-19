@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#1F3A5F</color>
+    <!-- The green of the Fossify launcher icons (#106D20, measured on a phone screenshot on 2026-11-18). It is the
+         launcher icon's own color and not a palette token; PaletteContrastTest checks it and its contrast with the
+         white glyph. -->
+    <color name="ic_launcher_background">#106D20</color>
 </resources>

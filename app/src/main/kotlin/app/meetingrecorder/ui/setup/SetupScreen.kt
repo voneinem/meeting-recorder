@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.meetingrecorder.R
+import app.meetingrecorder.ui.components.AppCard
+import app.meetingrecorder.ui.components.AppButton
 
 /** Opens the system folder picker with the flags needed to keep write access across restarts. */
 class OpenStorageTree : ActivityResultContracts.OpenDocumentTree() {
@@ -70,7 +70,7 @@ fun SetupScreen(
             Text(text = stringResource(R.string.setup_error_lost), color = MaterialTheme.colorScheme.error)
         }
         Text(text = stringResource(R.string.setup_explanation))
-        Card(modifier = Modifier.fillMaxWidth()) {
+        AppCard(modifier = Modifier.fillMaxWidth()) {
             Text(text = stringResource(R.string.setup_privacy_notice), modifier = Modifier.padding(16.dp))
         }
         (state as? SetupUiState.Unusable)?.let {
@@ -83,7 +83,7 @@ fun SetupScreen(
         if (state == SetupUiState.Checking) {
             CircularProgressIndicator()
         } else {
-            Button(onClick = { picker.launch(null) }, modifier = Modifier.fillMaxWidth()) {
+            AppButton(onClick = { picker.launch(null) }, modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.setup_choose_folder))
             }
         }

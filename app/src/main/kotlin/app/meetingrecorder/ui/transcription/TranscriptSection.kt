@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +27,7 @@ import app.meetingrecorder.storage.TranscriptLoad
 import app.meetingrecorder.ui.playback.PhotoItem
 import app.meetingrecorder.ui.playback.PlaybackUiState
 import app.meetingrecorder.ui.playback.TranscriptRow
+import app.meetingrecorder.ui.components.AppCard
 
 /**
  * The transcript of a meeting as lazy list items: segment rows (the start time and the text, announced as a
@@ -96,7 +96,7 @@ private fun SegmentRow(row: TranscriptRow.Segment, onSeek: (Long) -> Unit) {
 private fun PhotoRow(row: TranscriptRow.Photo, photo: PhotoItem?, onPhoto: (String) -> Unit) {
     val time = Timeline.format(row.atMs)
     val description = stringResource(R.string.transcript_photo_description, row.number, time)
-    Card(onClick = { onPhoto(row.path) }, modifier = Modifier.fillMaxWidth().semantics { contentDescription = description }) {
+    AppCard(onClick = { onPhoto(row.path) }, modifier = Modifier.fillMaxWidth().semantics { contentDescription = description }) {
         Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             photo?.thumbnail?.let {
                 Image(bitmap = it.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(PHOTO_SIZE))

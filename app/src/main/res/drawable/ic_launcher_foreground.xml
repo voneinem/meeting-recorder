@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A simple microphone glyph inside the adaptive-icon safe zone. -->
+<!-- A bold microphone glyph, centered in the 66 dp safe zone of the 108 dp adaptive icon. The same drawable is the
+     monochrome layer of themed icons. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
@@ -7,11 +8,11 @@
     android:viewportHeight="108">
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,30a8,8 0,0 1,8 8v14a8,8 0,0 1,-16 0V38a8,8 0,0 1,8,-8z" />
+        android:pathData="M54,24a10,10 0,0 1,10,10v14a10,10 0,0 1,-20,0V34a10,10 0,0 1,10,-10z" />
     <path
         android:fillColor="#00000000"
-        android:pathData="M42,50a12,12 0,0 0,24 0M54,62v10M46,72h16"
+        android:pathData="M38,46a16,16 0,0 0,32,0M54,62v14M44,78h20"
         android:strokeColor="#FFFFFF"
         android:strokeLineCap="round"
-        android:strokeWidth="3" />
+        android:strokeWidth="4" />
 </vector>

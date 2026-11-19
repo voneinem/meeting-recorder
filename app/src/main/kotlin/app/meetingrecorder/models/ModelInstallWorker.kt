@@ -82,6 +82,7 @@ class ModelInstallWorker(context: Context, params: WorkerParameters) : Coroutine
         val cancel = WorkManager.getInstance(applicationContext).createCancelPendingIntent(id)
         return NotificationCompat.Builder(applicationContext, Notifications.CHANNEL_PROGRESS)
             .setSmallIcon(R.drawable.ic_notification)
+            .setColor(applicationContext.getColor(R.color.notification_accent))
             .setContentTitle(applicationContext.getString(R.string.model_notification_title))
             .setContentText(applicationContext.getString(R.string.model_notification_text, percent))
             .setProgress(PERCENT, percent, false)
@@ -102,6 +103,7 @@ class ModelInstallWorker(context: Context, params: WorkerParameters) : Coroutine
         }
         val notification = NotificationCompat.Builder(applicationContext, Notifications.CHANNEL_RESULT)
             .setSmallIcon(R.drawable.ic_notification)
+            .setColor(applicationContext.getColor(R.color.notification_accent))
             .setContentTitle(applicationContext.getString(R.string.models_title))
             .setContentText(applicationContext.getString(text))
             .setAutoCancel(true)
