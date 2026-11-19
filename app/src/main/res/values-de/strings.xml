@@ -63,6 +63,7 @@
     <string name="settings_about_heading">Über die App</string>
     <string name="settings_version">Version %1$s</string>
     <string name="settings_license">Lizenz: GPL-3.0-or-later</string>
+    <string name="settings_copyright">Copyright © 2026 Volker von Einem</string>
     <string name="settings_privacy">Keine Besprechungsdaten verlassen dieses Gerät. Das Netzwerk wird nur genutzt, um ein Modell zur Spracherkennung zu laden, wenn du auf Laden tippst.</string>
 
     <!-- User story 6: interruptions, storage and limits -->

@@ -2,8 +2,9 @@
 
 Android app (Kotlin, Jetpack Compose, Material 3, minSdk 30) that records meeting audio and photos
 into open meeting folders and transcribes them on the device. Specification, plan, contracts and tasks
-are in `specs/001-meeting-recording-mvp/` (Phase 1), `specs/002-offline-transcription/` (Phase 2) and
-`specs/003-fossify-style/` (the visual style of Phase 3); the
+are in `specs/001-meeting-recording-mvp/` (Phase 1), `specs/002-offline-transcription/` (Phase 2),
+`specs/003-fossify-style/` (the visual style of Phase 3) and `specs/004-fdroid-release/` (the F-Droid release of
+Phase 4); the
 constitution is `.specify/memory/constitution.md`.
 
 ## Build and test
@@ -11,7 +12,7 @@ constitution is `.specify/memory/constitution.md`.
 ```bash
 ./gradlew :core:test :app:check :app:assembleDebug    # everything that must be green
 ./gradlew :app:verifyNoForbiddenDependencies :app:verifyManifestPermissions
-./gradlew :app:verifyNoPrebuiltBinaries :app:verifyWhisperPin :whisper:assembleDebug
+./gradlew :app:verifyNoPrebuiltBinaries :app:verifyWhisperPin :app:verifyReleaseMetadata :whisper:assembleDebug
 ```
 
 - JDK 21 and the Android SDK are required (`JAVA_HOME`, `ANDROID_HOME`). The native engine
@@ -55,6 +56,12 @@ constitution is `.specify/memory/constitution.md`.
   `specs/003-fossify-style/contracts/theme-contract.md`.
 - **Single timeline**: positions are sample frames (`atFrame`) counted by the WAV writer; `atMs` is
   derived. Never use wall-clock time for positions.
+- **Release metadata**: the F-Droid recipe copy, the store metadata, the version and the author data are checked by
+  `verifyReleaseMetadata`. The recipe lives in F-Droid's `fdroiddata`; the copy in
+  `specs/004-fdroid-release/contracts/` is what is submitted. The version lives only in `app/build.gradle.kts`
+  (`contracts/release-policy.md`). No signing material in the repository. `gradle/verification-metadata.xml` must
+  also work with an empty Gradle cache (`GRADLE_USER_HOME` fresh); a warm cache hides missing entries. Commit, tag
+  and push only when the owner asks; the author's private git address is never written into a file.
 - **Minimal permissions**: the manifest allow-list is checked by `verifyManifestPermissions`. `INTERNET`
   is allowed only for the explicit, user-initiated model download, is used only in
   `app/src/main/kotlin/app/meetingrecorder/models/download/`, and the network security config

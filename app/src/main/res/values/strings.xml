@@ -63,6 +63,7 @@
     <string name="settings_about_heading">About</string>
     <string name="settings_version">Version %1$s</string>
     <string name="settings_license">License: GPL-3.0-or-later</string>
+    <string name="settings_copyright">Copyright © 2026 Volker von Einem</string>
     <string name="settings_privacy">No meeting data leaves this device. The only network use is downloading a speech recognition model when you tap Download.</string>
 
     <!-- User story 6: interruptions, storage and limits -->

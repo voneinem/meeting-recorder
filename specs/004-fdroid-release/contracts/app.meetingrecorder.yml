@@ -1,0 +1,36 @@
+Categories:
+  - Multimedia
+License: GPL-3.0-or-later
+AuthorName: Volker von Einem
+AuthorEmail: vve-f-droid@gmx.net
+SourceCode: https://github.com/voneinem/meeting-recorder
+IssueTracker: https://github.com/voneinem/meeting-recorder/issues
+
+AutoName: Meeting Recorder
+
+RepoType: git
+Repo: https://github.com/voneinem/meeting-recorder.git
+
+Builds:
+  - versionName: 0.1.0
+    versionCode: 1
+    commit: TAG_COMMIT_PLACEHOLDER
+    subdir: app
+    submodules: true
+    gradle:
+      - yes
+    rm:
+      - whisper/src/main/cpp/whisper.cpp/examples
+      - whisper/src/main/cpp/whisper.cpp/bindings
+      - whisper/src/main/cpp/whisper.cpp/models
+      - whisper/src/main/cpp/whisper.cpp/samples
+      - whisper/src/main/cpp/whisper.cpp/tests
+      - whisper/src/main/cpp/whisper.cpp/ci
+    ndk: r29
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+UpdateCheckData: 
+  app/build.gradle.kts|versionCode\s*=\s*(\d+)|app/build.gradle.kts|versionName\s*=\s*"([^"]+)"
+CurrentVersion: 0.1.0
+CurrentVersionCode: 1

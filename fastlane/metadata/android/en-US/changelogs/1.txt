@@ -1,0 +1,6 @@
+First release.
+• Record meetings from the built-in or a USB microphone, with the screen off
+• Take photos during the recording; each photo sits at its moment on the timeline
+• Transcribe on the phone with a speech model you download once or import
+• Plain meeting folders (audio.wav, photos, meeting.json) you can read without the app
+• No tracking, no accounts, no cloud

@@ -16,6 +16,11 @@ Take photos with one tap during the recording. During playback, tap a photo to j
 <b>Transcription</b>
 A meeting is transcribed on the phone, even with the screen off. You choose a speech recognition model (downloaded once or imported from a file) and the language (automatic, German, English). The result is saved in the meeting folder (transcript.json and transcript.md, with the photos placed in the text). Tap a sentence to play the audio from there.
 
+The speech recognition model is not part of the app. You download it once from huggingface.co (the app names the file, its size and the source first, and starts nothing before you tap Download) or you import it from a file. Nothing else is ever downloaded, and no meeting data is ever sent.
+
+<b>Supported devices</b>
+Transcription needs a 64-bit ARM phone (arm64-v8a) or an x86_64 device. On other devices, for example 32-bit ARM, transcription is not available.
+
 <b>Open files</b>
 Each meeting is a plain folder: audio.wav, a photos folder, meeting.json with all details and a CLAUDE.md that explains the format. You can read it without the app, or give the folder to an AI assistant such as Claude Code to get a summary, minutes or action items.
 

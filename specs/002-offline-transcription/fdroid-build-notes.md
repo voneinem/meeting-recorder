@@ -67,9 +67,8 @@ Each model's license is shown with it in the app before the download. The README
 
 ## Open question (research R-16)
 
-How F-Droid's inclusion policy treats an app that downloads model files from a third-party host
-(`huggingface.co`). The files are free assets (MIT), the download starts only when the user taps Download after
-a confirmation that names file, size and source, no meeting data is ever sent, and the app does not promote a
-non-free network service. This is **not decided here**; it needs the F-Droid maintainers' answer when the
-metadata is submitted. If the policy rejects it, the fallback is the import path alone (the user picks a model
-file), which already works without any network.
+How F-Droid's policy treats an app that downloads model files from a third-party host
+(`huggingface.co`). **Answered by the project on 2026-11-19 in
+[`specs/004-fdroid-release/r16-decision.md`](../004-fdroid-release/r16-decision.md): no anti-feature, with the
+question put to the maintainers in the merge request and an import-only fallback prepared.** The answer is final
+only after the maintainers' reply. The reasoning, the policy sources and the fallback switch are in that record.

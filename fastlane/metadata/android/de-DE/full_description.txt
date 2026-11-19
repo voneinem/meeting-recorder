@@ -1,7 +1,7 @@
 Meeting Recorder nimmt den Ton einer Besprechung auf und lässt dich währenddessen Fotos von Whiteboards oder Folien machen. Jedes Foto steht genau an der Stelle der Aufnahme, an der du es gemacht hast.
 
 <b>Alles bleibt auf deinem Telefon</b>
-Kein Tracking, keine Konten, keine Cloud. Deine Besprechungen verlassen das Telefon nie. Die App lädt nur ein Spracherkennungsmodell herunter, und nur wenn du auf „Herunterladen“ tippst. Die Transkription läuft auf deinem Telefon.
+Kein Tracking, keine Konten, keine Cloud. Deine Besprechungen verlassen das Telefon nie. Die App lädt nur ein Spracherkennungsmodell herunter, und nur wenn du auf „Laden“ tippst. Die Transkription läuft auf deinem Telefon.
 
 <b>Aufnahme</b>
 • Eingebautes Mikrofon oder externes USB-Mikrofon, Mono oder Stereo (Stereo, wenn das Mikrofon zwei Kanäle liefert)
@@ -15,6 +15,11 @@ Mit einem Tipp während der Aufnahme fotografieren. Bei der Wiedergabe springst 
 
 <b>Transkription</b>
 Eine Besprechung wird auf dem Telefon transkribiert, auch bei ausgeschaltetem Bildschirm. Du wählst ein Spracherkennungsmodell (einmal geladen oder aus einer Datei importiert) und die Sprache (automatisch, Deutsch, Englisch). Das Ergebnis wird im Besprechungsordner gespeichert (transcript.json und transcript.md, mit den Fotos im Text). Tippe auf einen Satz, um das Audio ab dort abzuspielen.
+
+Das Spracherkennungsmodell gehört nicht zur App. Du lädst es einmal von huggingface.co herunter (die App nennt vorher Datei, Größe und Quelle und startet erst, wenn du auf „Laden“ tippst) oder importierst es aus einer Datei. Sonst wird nie etwas geladen, und keine Besprechungsdaten werden jemals gesendet.
+
+<b>Unterstützte Geräte</b>
+Die Transkription braucht ein 64-Bit-ARM-Telefon (arm64-v8a) oder ein x86_64-Gerät. Auf anderen Geräten, etwa mit 32-Bit-ARM, ist die Transkription nicht verfügbar.
 
 <b>Offene Dateien</b>
 Jede Besprechung ist ein gewöhnlicher Ordner: audio.wav, ein Ordner photos, meeting.json mit allen Angaben und eine CLAUDE.md, die das Format erklärt. Du kannst ihn ohne die App lesen oder einem KI-Assistenten wie Claude Code geben, um eine Zusammenfassung, ein Protokoll oder Aufgaben zu erhalten.

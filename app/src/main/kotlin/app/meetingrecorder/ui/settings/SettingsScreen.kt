@@ -109,6 +109,7 @@ fun SettingsScreen(preferences: AppPreferences, onChangeFolder: () -> Unit, onOp
         Text(text = stringResource(R.string.settings_about_heading), style = MaterialTheme.typography.titleMedium)
         Text(text = stringResource(R.string.settings_version, version))
         Text(text = stringResource(R.string.settings_license))
+        Text(text = stringResource(R.string.settings_copyright))
         Text(text = stringResource(R.string.settings_privacy))
 
         AppTextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {

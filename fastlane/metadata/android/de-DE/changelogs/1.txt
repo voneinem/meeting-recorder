@@ -1,0 +1,6 @@
+Erste Veröffentlichung.
+• Besprechungen mit dem eingebauten oder einem USB-Mikrofon aufnehmen, auch bei ausgeschaltetem Bildschirm
+• Während der Aufnahme fotografieren; jedes Foto steht an seinem Zeitpunkt auf der Zeitleiste
+• Auf dem Telefon transkribieren, mit einem Sprachmodell, das du einmal lädst oder importierst
+• Gewöhnliche Besprechungsordner (audio.wav, Fotos, meeting.json), lesbar ohne die App
+• Kein Tracking, keine Konten, keine Cloud

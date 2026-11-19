@@ -101,10 +101,11 @@ Supported ABIs are `arm64-v8a` (phones) and `x86_64` (the emulator, for function
 no 32-bit ARM build, so transcription is not available on such a device.
 
 `:app:check` also runs lint (missing translations and hard-coded text are errors), the
-hard-coded-string scan, and four build gates: no proprietary or Google dependencies, the merged manifest must contain
+hard-coded-string scan, and five build gates: no proprietary or Google dependencies, the merged manifest must contain
 exactly the allowed permissions (and `INTERNET` only with the restricted network configuration), no
-prebuilt binaries in the sources, and the engine submodule must be at the commit pinned in
-`gradle/whisper.pin`. More commands and the manual test
+prebuilt binaries in the sources, the engine submodule must be at the commit pinned in
+`gradle/whisper.pin`, and the release metadata (the F-Droid recipe copy, the store texts and images, the version and
+the author data) must agree with the build, with no signing material in the repository. More commands and the manual test
 scenarios are in [`specs/001-meeting-recording-mvp/quickstart.md`](specs/001-meeting-recording-mvp/quickstart.md).
 
 ## Project layout
@@ -125,6 +126,24 @@ scenarios are in [`specs/001-meeting-recording-mvp/quickstart.md`](specs/001-mee
   `huggingface.co/ggerganov/whisper.cpp`) and the voice-activity model (Silero VAD, from
   `huggingface.co/ggml-org/whisper-vad`), MIT License. They are downloaded by the user, never bundled.
 
-## License
+## Release and F-Droid
+
+The app is prepared for publication on [F-Droid](https://f-droid.org), which builds it from source and signs it
+with its own key. This repository holds no signing key.
+
+- The version lives only in `app/build.gradle.kts`: `versionName` follows semantic versioning, `versionCode` grows by
+  one with every release, and the tag is `v<versionName>` (see
+  [`specs/004-fdroid-release/contracts/release-policy.md`](specs/004-fdroid-release/contracts/release-policy.md)).
+- The store texts, the changelog, the icon and the screenshots are in `fastlane/metadata/android/` (English and German).
+- The build recipe for F-Droid lives in F-Droid's own `fdroiddata` repository; the reviewed copy that is submitted is
+  [`specs/004-fdroid-release/contracts/app.meetingrecorder.yml`](specs/004-fdroid-release/contracts/app.meetingrecorder.yml).
+  It was built and checked in F-Droid's build image (results in
+  [`specs/004-fdroid-release/build-results.md`](specs/004-fdroid-release/build-results.md)).
+- An app signed by F-Droid cannot update a debug build or a build signed with another key: uninstall the debug build
+  first.
+
+## Author and license
+
+Copyright © 2026 Volker von Einem ([@voneinem](https://github.com/voneinem), <vve-f-droid@gmx.net>).
 
 SPDX-License-Identifier: GPL-3.0-or-later. See [LICENSE](LICENSE).
