@@ -124,6 +124,30 @@ size to the largest setting and open all screens.
 
 ---
 
+### User Story 4 - The app icon matches the Fossify icons (Priority: P3)
+
+A person who has Fossify apps on their phone sees Meeting Recorder next to them on the home screen and in the app
+drawer: a solid green circle with a simple white glyph, in the same green and the same bold, flat style, so the
+app fits in with the others. The icon stays recognizable as a microphone.
+
+**Why this priority**: The icon is the first thing a person sees of the app and the clearest sign of the same
+family, but the app works without it, so it comes after the in-app look.
+
+**Independent Test**: Install the app and look at the launcher next to a Fossify app (for example the voice
+recorder): same green, same flat white glyph on a full circle, on a light and on a dark wallpaper; with the
+phone's themed-icon option on, the icon takes the system tint and stays recognizable.
+
+**Acceptance Scenarios**:
+
+1. **Given** a launcher with round icons, **When** the person looks at the app icon, **Then** it is a full green
+   circle (no navy, no outline, no shadow of its own) with a bold white microphone in the middle.
+2. **Given** a launcher that masks icons to other shapes (square, squircle, teardrop), **When** the person looks
+   at the icon, **Then** the glyph is never cut off and the green fills the whole shape.
+3. **Given** the themed-icon option of the phone is on, **When** the person looks at the icon, **Then** it is
+   shown in the system tint and the microphone is still recognizable.
+
+---
+
 ### Edge Cases
 
 - A running recording: the restyle must not change timing, audio capture or the recording notification
@@ -181,6 +205,10 @@ size to the largest setting and open all screens.
   needs no edits on individual screens.
 - **FR-015**: The window shown while the app starts MUST already use the page background of the current
   appearance.
+- **FR-016**: The launcher icon MUST be a solid green circle in the green of the Fossify launcher icons
+  (`#106D20`) with a bold white microphone glyph inside the safe zone of an adaptive icon, MUST have a
+  monochrome variant for themed icons, and MUST NOT contain any Fossify name, logo or glyph. The white glyph
+  MUST have a contrast of at least 4.5:1 against the green.
 
 ### Key Entities
 
@@ -196,8 +224,7 @@ size to the largest setting and open all screens.
 
 - **SC-001**: In a screen-by-screen review of all 7 screens in light and dark (14 views) against the
   Visual reference, 100% of the views use the reference palette, shapes and line weights, and none
-  shows a leftover color from the previous design. (This covers the in-app screens; the launcher icon is out
-  of scope.)
+  shows a leftover color from the previous design. (This covers the in-app screens; the launcher icon is covered by SC-008.)
 - **SC-002**: All text and control outlines pass the contrast thresholds of FR-011 in all 14 views.
 - **SC-003**: Changing the phone's wallpaper or system color theme changes none of the app's colors
   (0 differences on 3 different wallpapers).
@@ -209,6 +236,9 @@ size to the largest setting and open all screens.
   1 second (judged on the device, no instrument needed) and without losing the state of any open screen.
 - **SC-007**: In a quick look-alike check, a person who knows other Fossify apps or the Fossify website
   recognizes the app as visually belonging to the same family (accepted by the project owner).
+- **SC-008**: Next to a Fossify launcher icon on the same phone, the app icon shows the same green and the same
+  flat white glyph on a full circle in 100% of three checked launcher shapes (round, squircle, square), and in
+  the themed-icon mode the glyph is still recognizable as a microphone (checked on the phone).
 
 ## Assumptions
 
@@ -219,8 +249,11 @@ size to the largest setting and open all screens.
   (for example "follow system colors") is out of scope and can be added later.
 - The app keeps following the device's light or dark setting. A manual in-app light/dark switch is out of
   scope.
-- The launcher icon, the Play Store or F-Droid listing graphics and screenshots are out of scope; they can
-  be restyled in a later change.
+- The launcher icon is in scope (User Story 4, added on 2026-11-18 at the owner's request). The Play Store or
+  F-Droid listing graphics and screenshots are out of scope; they can be restyled in a later change.
+- The launcher icon takes over the Fossify icon style (a solid green circle with a simple white glyph) and the
+  green measured on the Fossify launcher icons on the owner's phone, `#106D20`. The glyph stays the app's own
+  microphone; no Fossify glyph, name or logo is copied.
 - The Fossify website's "system font" approach is mirrored in the app by using the system font, which also
   satisfies the project's rules of no bundled binaries and no network access for fonts.
 - The website's tokens were read on 2026-11-18. The website is a reference, not a dependency: the app has

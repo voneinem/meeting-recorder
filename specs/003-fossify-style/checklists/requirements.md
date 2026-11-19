@@ -34,5 +34,6 @@
 - Hex colors and corner radii in the Visual reference are design values (the requirement itself), not
   implementation details. The unit "dp" is the only platform term and only expresses a size.
 - Three decisions were made by default instead of asking, and are recorded under Assumptions: fixed
-  palette instead of wallpaper-based colors, no in-app theme switch, launcher icon out of scope.
+  palette instead of wallpaper-based colors, no in-app theme switch. The launcher icon was out of scope at
+  first and was added as User Story 4 on 2026-11-18.
   These are the points to revisit during `/speckit-clarify` if the owner disagrees.
