@@ -124,6 +124,60 @@ the behavior the release policy describes (uninstall a debug build first).
 **`:core` 353, `:app` 259, 0 failures**, equal to the baseline (no test added, none removed; this phase adds no app
 logic). The README and `CLAUDE.md` updates (T031, T032) are part of this tree.
 
+## Release tag and the clean-clone checks (T034 to T038), 2026-11-19
+
+- Release commit `cf6f93887c9f01bdea13158f7690d57c3d2c99ad` (author and committer `vve-f-droid@gmx.net`, chosen by the
+  owner for this commit; the owner's git config is unchanged) and the annotated tag `v0.1.0` (tagger the same address). Both
+  are local; nothing was pushed.
+- **Clean clone of the tag** (`git clone --recurse-submodules --branch v0.1.0`, the engine submodule fetched from GitHub
+  at `d1be6fde11ac6e0407606b4e42fe72d34add8037`): the complete gate (`:core:test :app:check :app:assembleDebug
+  :app:assembleRelease` and the five verify tasks, `:whisper:assembleDebug`) is green, 190 tasks executed; `:core` 353
+  and `:app` 259 tests, 0 failures. `aapt2 dump badging`: `versionCode='1' versionName='0.1.0'`, 39,370,114 bytes. No
+  `*.jks`, `*.keystore` or `keystore.properties` is tracked.
+- **Reproducibility (SC-003)**: the tag built in two different directories
+  (`~/fdroid-work/tag-a` and `~/fdroid-work/other/second-checkout/repro`): **all 24 native libraries identical**
+  (`sha256sum` of every `lib/*/*.so`), and the **two complete unsigned APKs are byte-identical**. The APK built by
+  F-Droid's build image from the scratch commit before the tag has the same SHA-256 and the same 24 libraries:
+  `159773be74c11a7fcb738928db4eae2c3865891c61d2deb1568f95184381ebde`.
+- **Recipe with the tag's commit**: `commit: cf6f93887c9f01bdea13158f7690d57c3d2c99ad` is written into the reviewed copy
+  (the gate accepts it); lint, `checkupdates` (recipe unchanged) and `fdroid build -v -l` were repeated with the
+  scratch recipe pointing at a scratch clone of the tag: lint exit 0, checkupdates exit 0 with no change, build exit 0
+  (`Successfully built app.meetingrecorder:1 from cf6f93887c9f01bdea13158f7690d57c3d2c99ad`, `BUILD SUCCESSFUL in 2m 36s`),
+  same APK hash. The edit of the recipe copy is a working-tree change after the tag; it is committed only with the
+  owner's go-ahead (release policy step 4).
+
+## Dry-read of the submission package (T043), 2026-11-19
+
+`submission.md` was followed literally from the first step as far as no account is needed (clone of `fdroiddata`,
+branch `app.meetingrecorder`, copy of the recipe, one commit, the helper commands with the **real** recipe).
+Findings: (1) **blocker**: with the real recipe `fdroid checkupdates` fails, "Authentication failed for
+https://github.com/voneinem/meeting-recorder.git": the repository is private (HTTP 404 on the public page, GitHub
+visibility `PRIVATE`); section 1.0 and step 0 were added to the package. (2) `scripts/fdroid/lint.sh` with the real
+recipe path works (exit 0). (3) `checkupdates.sh` and `build.sh` with the real recipe need the repository to be public
+and the tag pushed (steps 0 and 1): they are the pending final dry run (T044). (4) The "new file" check of step 5 is a
+real-fork property: in the scratch clone the file already existed, which is an artifact of the scratch tooling. No
+other missing step or wrong command was found; the package was corrected for (1).
+
 ## Open items
 
-(Filled in as the work proceeds; the last task lists everything that remains for the owner.)
+Everything that remains is for the owner, in this order (details and options in `submission.md`):
+
+1. **Decide whether the repository becomes public** (`submission.md` 1.0). It is private now, so F-Droid cannot clone it,
+   and the final dry run (T044) cannot run. Making it public also publishes the history, including the earlier
+   commits' author address.
+2. **Decide the three points of `submission.md` 1.1 to 1.3**: Quality point 6 (the project is four days old; F-Droid asks
+   for three months of active development unless an exception applies: about 2027-02-15 by age), reproducible builds
+   with your own signature or F-Droid's signature (one-way at first publication; the app is technically ready), and the
+   APK size / ABI split (one 39.4 MB APK as decided).
+3. **Approve a documentation commit** with the recipe's commit hash, `build-results.md`, `submission.md`,
+   `sc-results.md` and the task ticks (T038). The working tree has these changes uncommitted; the release commit and
+   the tag `v0.1.0` do not contain them.
+4. **Push** `main` and the tag `v0.1.0`; then run the final dry run against GitHub (T044:
+   `scripts/fdroid/lint.sh`, `checkupdates.sh`, `build.sh` with the real recipe).
+5. **Write the two marked passages** of the merge request text (why you wrote the app; the project's age) and the
+   reproducible-builds reason.
+6. **GitLab account, fork of `fdroiddata`, push of the branch `app.meetingrecorder`, the merge request, and the
+   answers to the maintainers** (`submission.md` sections 3 and 4).
+7. **The maintainers' answer on R-16** (the model download without an anti-feature): the decision is final only after it.
+8. If you want the emulator or the phone checked again with the released F-Droid build, the device checks skipped in
+   Phase 2 (`specs/002-offline-transcription/sc-results.md`) are unchanged and still skipped.
