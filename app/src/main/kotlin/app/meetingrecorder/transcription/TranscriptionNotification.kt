@@ -26,6 +26,7 @@ class TranscriptionNotification(private val context: Context) {
             ?: context.getString(R.string.transcription_notification_percent, percent)
         return NotificationCompat.Builder(context, Notifications.CHANNEL_PROGRESS)
             .setSmallIcon(R.drawable.ic_notification)
+            .setColor(context.getColor(R.color.notification_accent))
             .setContentTitle(context.getString(R.string.transcription_notification_title, title))
             .setContentText(text)
             .setProgress(PERCENT, percent, false)
@@ -47,6 +48,7 @@ class TranscriptionNotification(private val context: Context) {
         }
         val builder = NotificationCompat.Builder(context, Notifications.CHANNEL_RESULT)
             .setSmallIcon(R.drawable.ic_notification)
+            .setColor(context.getColor(R.color.notification_accent))
             .setContentTitle(context.getString(heading))
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))

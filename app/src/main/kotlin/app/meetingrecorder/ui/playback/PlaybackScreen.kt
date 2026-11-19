@@ -15,13 +15,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +45,10 @@ import app.meetingrecorder.ui.transcription.JobBanner
 import app.meetingrecorder.ui.transcription.StartTranscriptionDialog
 import app.meetingrecorder.ui.transcription.transcriptSection
 import app.meetingrecorder.ui.transcription.startMessage
+import app.meetingrecorder.ui.components.AppCard
+import app.meetingrecorder.ui.components.AppButton
+import app.meetingrecorder.ui.components.AppOutlinedButton
+import app.meetingrecorder.ui.components.AppTextButton
 
 /**
  * Plays back one meeting: play and pause, a seek bar with the position, and the photos. Selecting a
@@ -71,7 +72,7 @@ fun PlaybackScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        item(key = "back") { TextButton(onClick = onBack) { Text(text = stringResource(R.string.action_back)) } }
+        item(key = "back") { AppTextButton(onClick = onBack) { Text(text = stringResource(R.string.action_back)) } }
         when {
             state.notFound -> item(key = "not-found") { Text(text = stringResource(R.string.playback_not_found)) }
             state.loading -> Unit
@@ -81,10 +82,10 @@ fun PlaybackScreen(
                 }
                 state.message?.let { message ->
                     item(key = "message") {
-                        Card(modifier = Modifier.fillMaxWidth()) {
+                        AppCard(modifier = Modifier.fillMaxWidth()) {
                             Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Text(text = stringResource(message), modifier = Modifier.weight(1f))
-                                TextButton(onClick = viewModel::messageShown) { Text(text = stringResource(R.string.action_ok)) }
+                                AppTextButton(onClick = viewModel::messageShown) { Text(text = stringResource(R.string.action_ok)) }
                             }
                         }
                     }
@@ -127,7 +128,7 @@ private fun TranscribeEntry(folderName: String, replacing: Boolean, onOpenModels
     var dialog by remember { mutableStateOf(false) }
     var notice by remember { mutableStateOf<Int?>(null) }
     val context = androidx.compose.ui.platform.LocalContext.current
-    OutlinedButton(onClick = { dialog = true }, modifier = Modifier.fillMaxWidth()) {
+    AppOutlinedButton(onClick = { dialog = true }, modifier = Modifier.fillMaxWidth()) {
         Text(text = stringResource(if (replacing) R.string.transcribe_again else R.string.transcribe_action))
     }
     notice?.let { Text(text = stringResource(it), color = MaterialTheme.colorScheme.error) }
@@ -160,6 +161,8 @@ private fun PlaybackContent(state: PlaybackUiState, viewModel: PlaybackViewModel
             dragging = null
         },
         valueRange = 0f..duration.toFloat(),
+        // The unplayed part of the track must be visible against the page (3:1): the default pale tint is not.
+        colors = SliderDefaults.colors(inactiveTrackColor = MaterialTheme.colorScheme.outline),
         enabled = player.ready,
         modifier = Modifier
             .fillMaxWidth()
@@ -171,7 +174,7 @@ private fun PlaybackContent(state: PlaybackUiState, viewModel: PlaybackViewModel
         style = MaterialTheme.typography.titleLarge,
         modifier = Modifier.fillMaxWidth(),
     )
-    Button(onClick = viewModel::playPause, enabled = player.ready, modifier = Modifier.fillMaxWidth()) {
+    AppButton(onClick = viewModel::playPause, enabled = player.ready, modifier = Modifier.fillMaxWidth()) {
         Text(text = stringResource(if (player.playing) R.string.playback_pause else R.string.playback_play))
     }
 
@@ -191,7 +194,7 @@ private fun PlaybackContent(state: PlaybackUiState, viewModel: PlaybackViewModel
 private fun PhotoThumbnail(photo: PhotoItem, onClick: () -> Unit) {
     val time = Timeline.format(photo.atMs)
     val description = stringResource(R.string.playback_photo_description, time)
-    Card(onClick = onClick) {
+    AppCard(onClick = onClick) {
         Column(modifier = Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Box(modifier = Modifier.size(THUMBNAIL_SIZE), contentAlignment = Alignment.Center) {
                 photo.thumbnail?.let {
@@ -213,11 +216,11 @@ private fun PhotoViewer(atMs: Long, bitmap: android.graphics.Bitmap?, onClose: (
     val time = Timeline.format(atMs)
     val description = stringResource(R.string.playback_photo_description, time)
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Card(modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(8.dp)) {
+        AppCard(modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(8.dp)) {
             Column(modifier = Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text(text = time, style = MaterialTheme.typography.titleLarge)
-                    TextButton(onClick = onClose) { Text(text = stringResource(R.string.playback_photo_close)) }
+                    AppTextButton(onClick = onClose) { Text(text = stringResource(R.string.playback_photo_close)) }
                 }
                 Box(modifier = Modifier.weight(1f).fillMaxWidth().clickable(onClick = onClose), contentAlignment = Alignment.Center) {
                     bitmap?.let {

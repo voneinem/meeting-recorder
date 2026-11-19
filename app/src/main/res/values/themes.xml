@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The UI is Jetpack Compose; this window theme only provides the system chrome. -->
+    <!-- The UI is Jetpack Compose; this window theme provides the system chrome and the first frame, which already
+         has the page background of the current appearance (no flash in dark mode). The splash background of
+         Android 12 and later is set in values-v31. -->
     <style name="Theme.MeetingRecorder" parent="android:Theme.DeviceDefault.DayNight">
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@color/window_background</item>
     </style>
 </resources>

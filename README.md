@@ -35,6 +35,13 @@ recognition model when you choose to, and the app has no telemetry and no cloud 
 
 Not in Phase 2: speaker detection, summaries, translation, live transcription.
 
+## Look and feel
+
+The visual style (a green accent on soft neutral surfaces, 8 dp corners, thin lines, the system font, a light
+and a dark appearance that follow the phone) is inspired by the website of the Fossify project. The app is
+independent: it uses no Fossify names or logos and does not claim to be a Fossify app. The colors are fixed and
+do not follow the wallpaper; they are defined in `app/src/main/kotlin/app/meetingrecorder/ui/theme/Palette.kt`.
+
 ## Privacy
 
 - The `INTERNET` permission is used only for the explicit model download from `huggingface.co`; nothing

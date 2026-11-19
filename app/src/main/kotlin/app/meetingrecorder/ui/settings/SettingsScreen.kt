@@ -26,9 +26,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -37,6 +35,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.meetingrecorder.AppPreferences
 import app.meetingrecorder.R
+import app.meetingrecorder.ui.components.AppOutlinedButton
+import app.meetingrecorder.ui.components.AppTextButton
 
 /** Settings and about (T054): the consent notice again, the storage folder, version, license, privacy. */
 @Composable
@@ -68,12 +68,12 @@ fun SettingsScreen(preferences: AppPreferences, onChangeFolder: () -> Unit, onOp
 
         Text(text = stringResource(R.string.settings_storage_heading), style = MaterialTheme.typography.titleMedium)
         Text(text = folder)
-        OutlinedButton(onClick = onChangeFolder, modifier = Modifier.fillMaxWidth()) {
+        AppOutlinedButton(onClick = onChangeFolder, modifier = Modifier.fillMaxWidth()) {
             Text(text = stringResource(R.string.settings_change_folder))
         }
 
         Text(text = stringResource(R.string.settings_transcription_heading), style = MaterialTheme.typography.titleMedium)
-        OutlinedButton(onClick = onOpenModels, modifier = Modifier.fillMaxWidth()) {
+        AppOutlinedButton(onClick = onOpenModels, modifier = Modifier.fillMaxWidth()) {
             Text(text = stringResource(R.string.settings_models_entry))
         }
         Text(text = stringResource(R.string.settings_models_entry_summary), style = MaterialTheme.typography.bodySmall)
@@ -111,7 +111,7 @@ fun SettingsScreen(preferences: AppPreferences, onChangeFolder: () -> Unit, onOp
         Text(text = stringResource(R.string.settings_license))
         Text(text = stringResource(R.string.settings_privacy))
 
-        TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+        AppTextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
             Text(text = stringResource(R.string.action_back))
         }
     }

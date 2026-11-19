@@ -1,25 +1,35 @@
 package app.meetingrecorder.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 
-/** Material 3 theme: dynamic color on Android 12 and later, fixed palettes otherwise. */
+private val LocalStatusColors = staticCompositionLocalOf { LightStatusColors }
+
+/**
+ * The status colors of the current appearance (success, information, warning, error), each with a container and
+ * the text color on it. Read them here, never as hex values (theme contract rule 1).
+ */
+val MaterialTheme.statusColors: StatusColors
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalStatusColors.current
+
+/**
+ * The one theme of the app: the fixed palette in a light and a dark appearance, chosen by the device setting and
+ * by nothing else. There is no wallpaper-based (dynamic) color: the look must be the same on every phone.
+ */
 @Composable
 fun MeetingRecorderTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    val context = LocalContext.current
-    val colors = when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        darkTheme -> DarkColors
-        else -> LightColors
+    val colors = if (darkTheme) DarkColorScheme else LightColorScheme
+    val status = if (darkTheme) DarkStatusColors else LightStatusColors
+    CompositionLocalProvider(LocalStatusColors provides status) {
+        MaterialTheme(colorScheme = colors, shapes = AppShapes, typography = AppTypography, content = content)
     }
-    MaterialTheme(colorScheme = colors, typography = AppTypography, content = content)
 }

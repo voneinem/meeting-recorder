@@ -17,13 +17,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,6 +51,10 @@ import app.meetingrecorder.permissions.RecordPermissions
 import app.meetingrecorder.recording.Phase
 import app.meetingrecorder.recording.localizedSourceName
 import app.meetingrecorder.ui.components.LevelMeterBar
+import app.meetingrecorder.ui.components.AppCard
+import app.meetingrecorder.ui.components.AppButton
+import app.meetingrecorder.ui.components.AppOutlinedButton
+import app.meetingrecorder.ui.components.AppTextButton
 
 /**
  * The recording screen (FR-001, FR-004, FR-005, FR-007): title and Start while idle; elapsed time,
@@ -117,14 +117,14 @@ fun RecordScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         notice?.let { current ->
-            Card(modifier = Modifier.fillMaxWidth()) {
+            AppCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     val text = when (current) {
                         is Notice.Text -> stringResource(current.message, *current.args.toTypedArray())
                         is Notice.Plural -> pluralStringResource(current.message, current.quantity, current.quantity)
                     }
                     Text(text = text)
-                    TextButton(onClick = viewModel::dismissNotice) { Text(text = stringResource(R.string.action_ok)) }
+                    AppTextButton(onClick = viewModel::dismissNotice) { Text(text = stringResource(R.string.action_ok)) }
                 }
             }
         }
@@ -198,10 +198,10 @@ private fun IdleContent(
         modifier = Modifier.fillMaxWidth(),
     )
     SourcePicker(state = sources, onSelect = onSelectSource)
-    Button(onClick = onStart, enabled = !starting, modifier = Modifier.fillMaxWidth()) {
+    AppButton(onClick = onStart, enabled = !starting, modifier = Modifier.fillMaxWidth()) {
         Text(text = stringResource(R.string.record_start))
     }
-    TextButton(onClick = onOpenList, modifier = Modifier.fillMaxWidth()) {
+    AppTextButton(onClick = onOpenList, modifier = Modifier.fillMaxWidth()) {
         Text(text = stringResource(R.string.record_open_list))
     }
 }
@@ -260,7 +260,7 @@ private fun ActiveContent(
     val controlsEnabled = phase != Phase.FINALIZING
     if (cameraGranted) {
         CameraPreview(camera)
-        Button(onClick = onTakePhoto, enabled = controlsEnabled && !photoBusy, modifier = Modifier.fillMaxWidth()) {
+        AppButton(onClick = onTakePhoto, enabled = controlsEnabled && !photoBusy, modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = if (photoCount > 0) stringResource(R.string.photo_button_count, photoCount) else stringResource(R.string.photo_button),
             )
@@ -274,15 +274,15 @@ private fun ActiveContent(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (phase == Phase.RECORDING) {
-            OutlinedButton(onClick = onPause, enabled = controlsEnabled, modifier = Modifier.weight(1f)) {
+            AppOutlinedButton(onClick = onPause, enabled = controlsEnabled, modifier = Modifier.weight(1f)) {
                 Text(text = stringResource(R.string.record_pause))
             }
         } else {
-            OutlinedButton(onClick = onResume, enabled = controlsEnabled, modifier = Modifier.weight(1f)) {
+            AppOutlinedButton(onClick = onResume, enabled = controlsEnabled, modifier = Modifier.weight(1f)) {
                 Text(text = stringResource(R.string.action_resume))
             }
         }
-        Button(onClick = onStop, enabled = controlsEnabled, modifier = Modifier.weight(1f)) {
+        AppButton(onClick = onStop, enabled = controlsEnabled, modifier = Modifier.weight(1f)) {
             Text(text = stringResource(R.string.action_stop))
         }
     }

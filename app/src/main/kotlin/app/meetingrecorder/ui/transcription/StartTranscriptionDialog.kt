@@ -12,7 +12,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,6 +40,8 @@ import app.meetingrecorder.transcription.TranscriptionRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import app.meetingrecorder.ui.components.AppTextButton
+import app.meetingrecorder.ui.theme.statusColors
 
 /** The user-facing message for the answer to a start: a confirmation, or the reason for the refusal. */
 @StringRes
@@ -103,8 +104,8 @@ fun StartTranscriptionDialog(
             onDismissRequest = onDismiss,
             title = { Text(text = stringResource(R.string.transcribe_title)) },
             text = { Text(text = stringResource(R.string.transcribe_no_model)) },
-            confirmButton = { TextButton(onClick = { onDismiss(); onOpenModels() }) { Text(text = stringResource(R.string.transcribe_open_models)) } },
-            dismissButton = { TextButton(onClick = onDismiss) { Text(text = stringResource(R.string.action_cancel)) } },
+            confirmButton = { AppTextButton(onClick = { onDismiss(); onOpenModels() }) { Text(text = stringResource(R.string.transcribe_open_models)) } },
+            dismissButton = { AppTextButton(onClick = onDismiss) { Text(text = stringResource(R.string.action_cancel)) } },
         )
         return
     }
@@ -130,7 +131,7 @@ fun StartTranscriptionDialog(
         title = { Text(text = stringResource(if (replacing) R.string.transcribe_again else R.string.transcribe_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (replacing) Text(text = stringResource(R.string.transcribe_again_warning), color = MaterialTheme.colorScheme.error)
+                if (replacing) Text(text = stringResource(R.string.transcribe_again_warning), color = MaterialTheme.statusColors.warning.foreground)
                 Text(text = stringResource(R.string.transcribe_model_label), style = MaterialTheme.typography.labelLarge)
                 models.forEach { model ->
                     Choice(text = modelLabel(model, android.text.format.Formatter.formatShortFileSize(context, model.sizeBytes)), selected = model.id == selected.id) {
@@ -143,12 +144,12 @@ fun StartTranscriptionDialog(
                     "de" to R.string.settings_language_de,
                     "en" to R.string.settings_language_en,
                 ).forEach { (code, label) -> Choice(text = stringResource(label), selected = language == code) { language = code } }
-                if (languageWarning) Text(text = stringResource(R.string.transcribe_warning_language), color = MaterialTheme.colorScheme.error)
-                if (memoryWarning) Text(text = stringResource(R.string.transcribe_warning_memory), color = MaterialTheme.colorScheme.error)
+                if (languageWarning) Text(text = stringResource(R.string.transcribe_warning_language), color = MaterialTheme.statusColors.warning.foreground)
+                if (memoryWarning) Text(text = stringResource(R.string.transcribe_warning_memory), color = MaterialTheme.statusColors.warning.foreground)
             }
         },
         confirmButton = {
-            TextButton(
+            AppTextButton(
                 enabled = !starting,
                 onClick = {
                     starting = true
@@ -162,7 +163,7 @@ fun StartTranscriptionDialog(
                 },
             ) { Text(text = stringResource(R.string.transcribe_start)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(text = stringResource(R.string.action_cancel)) } },
+        dismissButton = { AppTextButton(onClick = onDismiss) { Text(text = stringResource(R.string.action_cancel)) } },
     )
 }
 

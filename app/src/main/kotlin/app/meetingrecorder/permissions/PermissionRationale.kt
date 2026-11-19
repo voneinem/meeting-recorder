@@ -8,9 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -18,6 +16,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import app.meetingrecorder.R
+import app.meetingrecorder.ui.components.AppButton
+import app.meetingrecorder.ui.components.AppOutlinedButton
 
 /** The runtime permissions of the recording feature (Principle VI: only what a feature needs). */
 object RecordPermissions {
@@ -52,14 +52,14 @@ fun CameraPermissionCard(
         Text(text = stringResource(R.string.photo_camera_reason))
         if (denied) {
             Text(text = stringResource(R.string.photo_camera_denied), color = MaterialTheme.colorScheme.error)
-            OutlinedButton(onClick = onAllow, modifier = Modifier.fillMaxWidth()) {
+            AppOutlinedButton(onClick = onAllow, modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.permission_retry))
             }
-            OutlinedButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {
+            AppOutlinedButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.permission_open_settings))
             }
         } else {
-            OutlinedButton(onClick = onAllow, modifier = Modifier.fillMaxWidth()) {
+            AppOutlinedButton(onClick = onAllow, modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.photo_camera_allow))
             }
         }
@@ -85,14 +85,14 @@ fun PermissionRationale(
         }
         if (microphoneDenied) {
             Text(text = stringResource(R.string.permission_microphone_denied), color = MaterialTheme.colorScheme.error)
-            Button(onClick = onContinue, modifier = Modifier.fillMaxWidth()) {
+            AppButton(onClick = onContinue, modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.permission_retry))
             }
-            OutlinedButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {
+            AppOutlinedButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.permission_open_settings))
             }
         } else {
-            Button(onClick = onContinue, modifier = Modifier.fillMaxWidth()) {
+            AppButton(onClick = onContinue, modifier = Modifier.fillMaxWidth()) {
                 Text(text = stringResource(R.string.permission_continue))
             }
         }

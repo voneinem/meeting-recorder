@@ -2,7 +2,7 @@ package app.meetingrecorder.ui.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -10,12 +10,9 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +36,10 @@ import app.meetingrecorder.ui.transcription.StatusChip
 import app.meetingrecorder.ui.transcription.startMessage
 import java.text.DateFormat
 import java.util.Date
+import app.meetingrecorder.ui.components.AppCard
+import app.meetingrecorder.ui.components.AppButton
+import app.meetingrecorder.ui.components.AppTextButton
+import app.meetingrecorder.ui.theme.statusColors
 
 /** The basic meeting list (FR-026): title, start and duration, newest first. */
 @Composable
@@ -65,10 +66,10 @@ fun MeetingListScreen(
     ) {
         Text(text = stringResource(R.string.list_title), style = MaterialTheme.typography.headlineMedium)
         state.message?.let { message ->
-            Card(modifier = Modifier.fillMaxWidth()) {
+            AppCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(text = stringResource(message))
-                    TextButton(onClick = viewModel::messageShown) { Text(text = stringResource(R.string.action_ok)) }
+                    AppTextButton(onClick = viewModel::messageShown) { Text(text = stringResource(R.string.action_ok)) }
                 }
             }
         }
@@ -90,10 +91,10 @@ fun MeetingListScreen(
                 }
             }
         }
-        Button(onClick = onNewRecording, modifier = Modifier.fillMaxWidth()) {
+        AppButton(onClick = onNewRecording, modifier = Modifier.fillMaxWidth()) {
             Text(text = stringResource(R.string.list_new_recording))
         }
-        TextButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {
+        AppTextButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {
             Text(text = stringResource(R.string.list_settings))
         }
     }
@@ -148,10 +149,10 @@ private fun RenameDialog(current: String, onConfirm: (String) -> Unit, onDismiss
             )
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(text) }, enabled = valid) { Text(text = stringResource(R.string.action_rename)) }
+            AppTextButton(onClick = { onConfirm(text) }, enabled = valid) { Text(text = stringResource(R.string.action_rename)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(text = stringResource(R.string.action_cancel)) }
+            AppTextButton(onClick = onDismiss) { Text(text = stringResource(R.string.action_cancel)) }
         },
     )
 }
@@ -164,14 +165,14 @@ private fun DeleteDialog(title: String, warnRunning: Boolean, onConfirm: () -> U
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(text = stringResource(R.string.list_delete_message, title))
-                if (warnRunning) Text(text = stringResource(R.string.meeting_delete_running_warning), color = MaterialTheme.colorScheme.error)
+                if (warnRunning) Text(text = stringResource(R.string.meeting_delete_running_warning), color = MaterialTheme.statusColors.warning.foreground)
             }
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) { Text(text = stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
+            AppTextButton(onClick = onConfirm) { Text(text = stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(text = stringResource(R.string.action_cancel)) }
+            AppTextButton(onClick = onDismiss) { Text(text = stringResource(R.string.action_cancel)) }
         },
     )
 }
@@ -190,7 +191,7 @@ private fun MeetingRow(
     val started = remember(entry.startedAtMs) {
         DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(entry.startedAtMs))
     }
-    Card(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
+    AppCard(onClick = onOpen, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(text = entry.title, style = MaterialTheme.typography.titleMedium)
             Text(text = started, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.align(Alignment.Start))
@@ -203,14 +204,15 @@ private fun MeetingRow(
                 entry.status == MeetingStatus.RECOVERED -> Text(text = stringResource(R.string.list_recovered))
             }
             if (editable) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // The actions wrap to a second line when they do not fit; a plain Row squeezed "Delete" to one letter per line.
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (entry.metadataReadable) {
-                        TextButton(onClick = onRename) { Text(text = stringResource(R.string.action_rename)) }
-                        TextButton(onClick = onTranscribe) {
+                        AppTextButton(onClick = onRename) { Text(text = stringResource(R.string.action_rename)) }
+                        AppTextButton(onClick = onTranscribe) {
                             Text(text = stringResource(if (entry.transcription == TranscriptionStatus.Done) R.string.transcribe_again else R.string.transcribe_action))
                         }
                     }
-                    TextButton(onClick = onDelete) { Text(text = stringResource(R.string.action_delete)) }
+                    AppTextButton(onClick = onDelete) { Text(text = stringResource(R.string.action_delete)) }
                 }
             }
         }
